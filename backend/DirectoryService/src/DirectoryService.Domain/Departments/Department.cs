@@ -1,0 +1,103 @@
+﻿using CSharpFunctionalExtensions;
+
+namespace DirectoryService.Domain.Departments;
+
+public sealed class Department : Entity<Guid>
+{
+    private Department(Guid id, DepartmentName name, DepartmentSlug slug, DepartmentPath path, Maybe<Guid> parentId,
+        DateTime createdAt) : base(id)
+    {
+        Name = name;
+        Slug = slug;
+        Path = path;
+        ParentId = parentId;
+        CreatedAt = createdAt;
+        UpdatedAt = Maybe<DateTime>.None;
+    }
+
+    public DepartmentName Name { get; private set; }
+
+    public DepartmentSlug Slug { get; }
+
+    public DepartmentPath Path { get; private set; }
+
+    public Maybe<Guid> ParentId { get; private set; }
+
+    public DateTime CreatedAt { get; }
+
+    public Maybe<DateTime> UpdatedAt { get; private set; }
+
+    public static Result<Department, string> Create(
+        Guid id,
+        DepartmentName name,
+        DepartmentSlug slug,
+        Maybe<Guid> parentId,
+        Maybe<string> parentPath,
+        DateTime createdAt)
+    {
+        if (id == Guid.Empty)
+            return Result.Failure<Department, string>("Id cannot be empty");
+
+        if (parentId.HasValue && parentId.Value == Guid.Empty)
+            return Result.Failure<Department, string>("ParentId cannot be empty");
+
+        if (createdAt == default)
+            return Result.Failure<Department, string>("CreatedAt is required");
+
+        var pathResult = BuildPath(slug, parentId, parentPath);
+        if (pathResult.IsFailure)
+            return Result.Failure<Department, string>(pathResult.Error);
+
+        return Result.Success<Department, string>(
+            new Department(id, name, slug, pathResult.Value, parentId, createdAt));
+    }
+
+    private static Result<DepartmentPath, string> BuildPath(
+        DepartmentSlug slug,
+        Maybe<Guid> parentId,
+        Maybe<string> parentPath)
+    {
+        string path;
+
+        if (parentId.HasValue)
+        {
+            if (!parentPath.HasValue || string.IsNullOrWhiteSpace(parentPath.Value))
+                return Result.Failure<DepartmentPath, string>("ParentPath is required when parentId is specified");
+
+            path = $"{parentPath.Value}/{slug.Value}";
+        }
+        else
+        {
+            path = $"/{slug.Value}";
+        }
+
+        return DepartmentPath.Create(path);
+    }
+
+    public UnitResult<string> Update(
+        DepartmentName name,
+        Maybe<Guid> parentId,
+        Maybe<string> parentPath,
+        DateTime updatedAt)
+    {
+        if (updatedAt == default)
+            return UnitResult.Failure("UpdatedAt is required");
+
+        if (CreatedAt > updatedAt)
+            return UnitResult.Failure("UpdatedAt must be greater than CreatedAt");
+
+        if (CreatedAt == updatedAt)
+            return UnitResult.Failure("UpdatedAt cannot be equal to CreatedAt");
+
+        var pathResult = BuildPath(Slug, parentId, parentPath);
+        if (pathResult.IsFailure)
+            return UnitResult.Failure(pathResult.Error);
+
+        Path = pathResult.Value;
+        ParentId = parentId;
+        UpdatedAt = updatedAt;
+        Name = name;
+
+        return UnitResult.Success<string>();
+    }
+}

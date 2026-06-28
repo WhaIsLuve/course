@@ -43,3 +43,6 @@ dotnet_diagnostic.S1144.severity = none
 dotnet_diagnostic.S1125.severity = error  # Redundant Boolean literal
 dotnet_diagnostic.S6673.severity = error  # Serilog template placeholder order
 dotnet_diagnostic.S108.severity  = error  # Пустой catch-блок без комментария
+
+# Отключение требования реализовать IComparable если он есть в базовом классе
+dotnet_diagnostic.MA0097.severity = none
