@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+BdData
+InitDb
+
 # User-specific files
 *.rsuser
 *.suo
