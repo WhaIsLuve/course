@@ -1,0 +1,22 @@
+services:
+  postgres_course:
+    container_name: postgres_course
+    image: postgres:16-alpine 
+    restart: always
+    environment:
+      POSTGRES_DB: "directory_service_db"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-psg}" 
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    command: ["postgres", "-c", "log_statement=all"]
+    volumes:
+      - ./InitDb:/docker-entrypoint-initdb.d
+      - ./BdData:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d directory_service_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
