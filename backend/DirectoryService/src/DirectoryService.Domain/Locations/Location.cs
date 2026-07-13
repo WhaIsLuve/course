@@ -12,9 +12,13 @@ public sealed class Location : Entity<Guid>
         UpdatedAt = Maybe<DateTime>.None;
     }
 
-    public LocationName Name { get; private set; }
+    private Location()
+    {
+    }
 
-    public Address Address { get; private set; }
+    public LocationName Name { get; private set; } = null!;
+
+    public Address Address { get; private set; } = null!;
 
     public DateTime CreatedAt { get; }
 

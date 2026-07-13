@@ -11,7 +11,11 @@ public sealed class Position : Entity<Guid>
         UpdatedAt = Maybe<DateTime>.None;
     }
 
-    public PositionName Name { get; private set; }
+    private Position()
+    {
+    }
+
+    public PositionName Name { get; private set; } = null!;
 
     public DateTime CreatedAt { get; }
 

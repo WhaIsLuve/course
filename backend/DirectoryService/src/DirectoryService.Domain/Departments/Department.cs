@@ -4,7 +4,7 @@ namespace DirectoryService.Domain.Departments;
 
 public sealed class Department : Entity<Guid>
 {
-    private Department(Guid id, DepartmentName name, DepartmentSlug slug, DepartmentPath path, Maybe<Guid> parentId,
+    private Department(Guid id, DepartmentName name, DepartmentSlug slug, DepartmentPath path, Guid? parentId,
         DateTime createdAt) : base(id)
     {
         Name = name;
@@ -15,13 +15,17 @@ public sealed class Department : Entity<Guid>
         UpdatedAt = Maybe<DateTime>.None;
     }
 
-    public DepartmentName Name { get; private set; }
+    private Department()
+    {
+    }
 
-    public DepartmentSlug Slug { get; }
+    public DepartmentName Name { get; private set; } = null!;
 
-    public DepartmentPath Path { get; private set; }
+    public DepartmentSlug Slug { get; } = null!;
 
-    public Maybe<Guid> ParentId { get; private set; }
+    public DepartmentPath Path { get; private set; } = null!;
+
+    public Guid? ParentId { get; private set; }
 
     public DateTime CreatedAt { get; }
 
@@ -31,7 +35,7 @@ public sealed class Department : Entity<Guid>
         Guid id,
         DepartmentName name,
         DepartmentSlug slug,
-        Maybe<Guid> parentId,
+        Guid? parentId,
         Maybe<string> parentPath,
         DateTime createdAt)
     {
@@ -54,7 +58,7 @@ public sealed class Department : Entity<Guid>
 
     private static Result<DepartmentPath, string> BuildPath(
         DepartmentSlug slug,
-        Maybe<Guid> parentId,
+        Guid? parentId,
         Maybe<string> parentPath)
     {
         string path;
@@ -76,7 +80,7 @@ public sealed class Department : Entity<Guid>
 
     public UnitResult<string> Update(
         DepartmentName name,
-        Maybe<Guid> parentId,
+        Guid? parentId,
         Maybe<string> parentPath,
         DateTime updatedAt)
     {
