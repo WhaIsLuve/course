@@ -13,6 +13,10 @@ public sealed class DepartmentLocation : Entity<Guid>
         CreatedAt = createdAt;
     }
 
+    private DepartmentLocation()
+    {
+    }
+
     public Guid DepartmentId { get; }
 
     public Guid LocationId { get; }

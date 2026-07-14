@@ -9,16 +9,19 @@ public sealed class Location : Entity<Guid>
         Name = name;
         Address = address;
         CreatedAt = createdAt;
-        UpdatedAt = Maybe<DateTime>.None;
     }
 
-    public LocationName Name { get; private set; }
+    private Location()
+    {
+    }
 
-    public Address Address { get; private set; }
+    public LocationName Name { get; private set; } = null!;
+
+    public Address Address { get; private set; } = null!;
 
     public DateTime CreatedAt { get; }
 
-    public Maybe<DateTime> UpdatedAt { get; private set; }
+    public DateTime? UpdatedAt { get; private set; }
 
     public static Result<Location, string> Create(
         Guid id,

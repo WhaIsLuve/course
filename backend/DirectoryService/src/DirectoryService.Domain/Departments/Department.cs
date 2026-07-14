@@ -4,7 +4,7 @@ namespace DirectoryService.Domain.Departments;
 
 public sealed class Department : Entity<Guid>
 {
-    private Department(Guid id, DepartmentName name, DepartmentSlug slug, DepartmentPath path, Maybe<Guid> parentId,
+    private Department(Guid id, DepartmentName name, DepartmentSlug slug, DepartmentPath path, Guid? parentId,
         DateTime createdAt) : base(id)
     {
         Name = name;
@@ -12,33 +12,36 @@ public sealed class Department : Entity<Guid>
         Path = path;
         ParentId = parentId;
         CreatedAt = createdAt;
-        UpdatedAt = Maybe<DateTime>.None;
     }
 
-    public DepartmentName Name { get; private set; }
+    private Department()
+    {
+    }
 
-    public DepartmentSlug Slug { get; }
+    public DepartmentName Name { get; private set; } = null!;
 
-    public DepartmentPath Path { get; private set; }
+    public DepartmentSlug Slug { get; } = null!;
 
-    public Maybe<Guid> ParentId { get; private set; }
+    public DepartmentPath Path { get; private set; } = null!;
+
+    public Guid? ParentId { get; private set; }
 
     public DateTime CreatedAt { get; }
 
-    public Maybe<DateTime> UpdatedAt { get; private set; }
+    public DateTime? UpdatedAt { get; private set; }
 
     public static Result<Department, string> Create(
         Guid id,
         DepartmentName name,
         DepartmentSlug slug,
-        Maybe<Guid> parentId,
-        Maybe<string> parentPath,
+        Guid? parentId,
+        string? parentPath,
         DateTime createdAt)
     {
         if (id == Guid.Empty)
             return Result.Failure<Department, string>("Id cannot be empty");
 
-        if (parentId.HasValue && parentId.Value == Guid.Empty)
+        if (parentId == Guid.Empty)
             return Result.Failure<Department, string>("ParentId cannot be empty");
 
         if (createdAt == default)
@@ -54,17 +57,17 @@ public sealed class Department : Entity<Guid>
 
     private static Result<DepartmentPath, string> BuildPath(
         DepartmentSlug slug,
-        Maybe<Guid> parentId,
-        Maybe<string> parentPath)
+        Guid? parentId,
+        string? parentPath)
     {
         string path;
 
         if (parentId.HasValue)
         {
-            if (!parentPath.HasValue || string.IsNullOrWhiteSpace(parentPath.Value))
+            if (parentPath == null || string.IsNullOrWhiteSpace(parentPath))
                 return Result.Failure<DepartmentPath, string>("ParentPath is required when parentId is specified");
 
-            path = $"{parentPath.Value}/{slug.Value}";
+            path = $"{parentPath}/{slug.Value}";
         }
         else
         {
@@ -76,8 +79,8 @@ public sealed class Department : Entity<Guid>
 
     public UnitResult<string> Update(
         DepartmentName name,
-        Maybe<Guid> parentId,
-        Maybe<string> parentPath,
+        Guid? parentId,
+        string? parentPath,
         DateTime updatedAt)
     {
         if (updatedAt == default)

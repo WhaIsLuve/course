@@ -8,14 +8,17 @@ public sealed class Position : Entity<Guid>
     {
         Name = name;
         CreatedAt = createdAt;
-        UpdatedAt = Maybe<DateTime>.None;
     }
 
-    public PositionName Name { get; private set; }
+    private Position()
+    {
+    }
+
+    public PositionName Name { get; private set; } = null!;
 
     public DateTime CreatedAt { get; }
 
-    public Maybe<DateTime> UpdatedAt { get; private set; }
+    public DateTime? UpdatedAt { get; private set; }
 
     public static Result<Position, string> Create(
         Guid id,
