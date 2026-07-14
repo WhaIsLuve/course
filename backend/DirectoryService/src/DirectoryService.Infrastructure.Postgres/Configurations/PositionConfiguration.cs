@@ -13,7 +13,7 @@ internal sealed class PositionConfiguration : IEntityTypeConfiguration<Position>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id)
             .ValueGeneratedNever()
-            .HasColumnName("position_id");
+            .HasColumnName("id");
         builder.ComplexProperty(x => x.Name,
             optBuilder => optBuilder.Property(x => x.Value).HasColumnName("name").IsRequired());
         builder.Property(x => x.CreatedAt)

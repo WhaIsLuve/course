@@ -56,14 +56,14 @@ namespace DirectoryService.Infrastructure.Postgres.Migrations
                 name: "positions",
                 columns: table => new
                 {
-                    position_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     name = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_positions", x => x.position_id);
+                    table.PrimaryKey("PK_positions", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -115,7 +115,7 @@ namespace DirectoryService.Infrastructure.Postgres.Migrations
                         name: "FK_department_positions_positions_position_id",
                         column: x => x.position_id,
                         principalTable: "positions",
-                        principalColumn: "position_id",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
