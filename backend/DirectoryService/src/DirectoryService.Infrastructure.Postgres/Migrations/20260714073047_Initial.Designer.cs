@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DirectoryService.Infrastructure.Postgres.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260714070402_Initial")]
+    [Migration("20260714073047_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -98,7 +98,7 @@ namespace DirectoryService.Infrastructure.Postgres.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("parent_id");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
@@ -149,7 +149,7 @@ namespace DirectoryService.Infrastructure.Postgres.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
@@ -158,7 +158,6 @@ namespace DirectoryService.Infrastructure.Postgres.Migrations
                             b1.IsRequired();
 
                             b1.Property<string>("Building")
-                                .IsRequired()
                                 .HasColumnType("text")
                                 .HasColumnName("building");
 
@@ -173,7 +172,6 @@ namespace DirectoryService.Infrastructure.Postgres.Migrations
                                 .HasColumnName("country");
 
                             b1.Property<string>("Street")
-                                .IsRequired()
                                 .HasColumnType("text")
                                 .HasColumnName("street");
                         });
@@ -203,7 +201,7 @@ namespace DirectoryService.Infrastructure.Postgres.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 

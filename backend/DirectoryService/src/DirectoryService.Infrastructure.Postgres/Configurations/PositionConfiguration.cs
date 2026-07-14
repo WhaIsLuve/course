@@ -1,5 +1,4 @@
 ﻿using DirectoryService.Domain.Positions;
-using DirectoryService.Infrastructure.Postgres.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -12,14 +11,15 @@ internal sealed class PositionConfiguration : IEntityTypeConfiguration<Position>
         builder.ToTable("positions");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id)
-            .ValueGeneratedNever()
-            .HasColumnName("id");
+               .ValueGeneratedNever()
+               .HasColumnName("id");
         builder.ComplexProperty(x => x.Name,
-            optBuilder => optBuilder.Property(x => x.Value).HasColumnName("name").IsRequired());
+            optBuilder => optBuilder.Property(x => x.Value)
+                                    .HasColumnName("name")
+                                    .IsRequired());
         builder.Property(x => x.CreatedAt)
-            .HasColumnName("created_at");
+               .HasColumnName("created_at");
         builder.Property(x => x.UpdatedAt)
-            .HasConversion(new MaybeConverter<DateTime>())
-            .HasColumnName("updated_at");
+               .HasColumnName("updated_at");
     }
 }

@@ -12,19 +12,22 @@ internal sealed class DepartmentPositionConfiguration : IEntityTypeConfiguration
     {
         builder.ToTable("department_positions");
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id).ValueGeneratedNever()
-            .HasColumnName("id");
-        builder.Property(x => x.DepartmentId).HasColumnName("department_id");
-        builder.Property(x => x.PositionId).HasColumnName("position_id");
+        builder.Property(x => x.Id)
+               .ValueGeneratedNever()
+               .HasColumnName("id");
+        builder.Property(x => x.DepartmentId)
+               .HasColumnName("department_id");
+        builder.Property(x => x.PositionId)
+               .HasColumnName("position_id");
         builder.Property(x => x.CreatedAt)
-            .HasColumnName("created_at");
+               .HasColumnName("created_at");
         builder.HasOne<Department>()
-            .WithMany()
-            .HasForeignKey(x => x.DepartmentId)
-            .OnDelete(DeleteBehavior.Cascade);
+               .WithMany()
+               .HasForeignKey(x => x.DepartmentId)
+               .OnDelete(DeleteBehavior.Cascade);
         builder.HasOne<Position>()
-            .WithMany()
-            .HasForeignKey(x => x.PositionId)
-            .OnDelete(DeleteBehavior.Cascade);
+               .WithMany()
+               .HasForeignKey(x => x.PositionId)
+               .OnDelete(DeleteBehavior.Cascade);
     }
 }

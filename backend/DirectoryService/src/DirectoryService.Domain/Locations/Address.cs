@@ -9,7 +9,7 @@ public record Address
     private const int StreetMaxLength = 200;
     private const int BuildingMaxLength = 50;
 
-    private Address(string country, string city, Maybe<string> street, Maybe<string> building)
+    private Address(string country, string city, string? street, string? building)
     {
         Country = country;
         City = city;
@@ -17,19 +17,23 @@ public record Address
         Building = building;
     }
 
-    public string Country { get; }
+    private Address()
+    {
+    }
 
-    public string City { get; }
+    public string Country { get; } = null!;
 
-    public Maybe<string> Street { get; }
+    public string City { get; } = null!;
 
-    public Maybe<string> Building { get; }
+    public string? Street { get; }
+
+    public string? Building { get; }
 
     public static Result<Address, string> Create(
         string country,
         string city,
-        Maybe<string> street,
-        Maybe<string> building)
+        string? street,
+        string? building)
     {
         if (string.IsNullOrWhiteSpace(country))
             return Result.Failure<Address, string>("Country is required");
@@ -43,16 +47,16 @@ public record Address
         if (city.Length > CityMaxLength)
             return Result.Failure<Address, string>($"City cannot exceed {CityMaxLength} characters");
 
-        if (street.HasValue && string.IsNullOrWhiteSpace(street.Value))
+        if (street != null && string.IsNullOrWhiteSpace(street))
             return Result.Failure<Address, string>("Street cannot be empty when specified");
 
-        if (street.HasValue && street.Value.Length > StreetMaxLength)
+        if (street is { Length: > StreetMaxLength })
             return Result.Failure<Address, string>($"Street cannot exceed {StreetMaxLength} characters");
 
-        if (building.HasValue && string.IsNullOrWhiteSpace(building.Value))
+        if (building != null && string.IsNullOrWhiteSpace(building))
             return Result.Failure<Address, string>("Building cannot be empty when specified");
 
-        if (building.HasValue && building.Value.Length > BuildingMaxLength)
+        if (building is { Length: > BuildingMaxLength })
             return Result.Failure<Address, string>($"Building cannot exceed {BuildingMaxLength} characters");
 
         return Result.Success<Address, string>(new Address(country, city, street, building));

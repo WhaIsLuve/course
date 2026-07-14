@@ -1,5 +1,4 @@
 ﻿using DirectoryService.Domain.Departments;
-using DirectoryService.Infrastructure.Postgres.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -23,7 +22,6 @@ internal sealed class DepartmentConfiguration : IEntityTypeConfiguration<Departm
         builder.Property(x => x.CreatedAt)
             .HasColumnName("created_at");
         builder.Property(x => x.UpdatedAt)
-            .HasConversion(new MaybeConverter<DateTime>())
             .HasColumnName("updated_at");
         builder.HasMany<Department>()
             .WithOne()

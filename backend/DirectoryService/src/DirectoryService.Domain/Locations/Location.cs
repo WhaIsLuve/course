@@ -9,7 +9,6 @@ public sealed class Location : Entity<Guid>
         Name = name;
         Address = address;
         CreatedAt = createdAt;
-        UpdatedAt = Maybe<DateTime>.None;
     }
 
     private Location()
@@ -22,7 +21,7 @@ public sealed class Location : Entity<Guid>
 
     public DateTime CreatedAt { get; }
 
-    public Maybe<DateTime> UpdatedAt { get; private set; }
+    public DateTime? UpdatedAt { get; private set; }
 
     public static Result<Location, string> Create(
         Guid id,

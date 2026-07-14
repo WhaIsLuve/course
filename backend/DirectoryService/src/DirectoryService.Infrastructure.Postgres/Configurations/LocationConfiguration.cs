@@ -1,5 +1,4 @@
 ﻿using DirectoryService.Domain.Locations;
-using DirectoryService.Infrastructure.Postgres.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -12,23 +11,28 @@ internal sealed class LocationConfiguration : IEntityTypeConfiguration<Location>
         builder.ToTable("locations");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id)
-            .ValueGeneratedNever()
-            .HasColumnName("id");
+               .ValueGeneratedNever()
+               .HasColumnName("id");
         builder.ComplexProperty(x => x.Name,
-            optBuilder => optBuilder.Property(x => x.Value).HasColumnName("name").IsRequired());
+            optBuilder => optBuilder.Property(x => x.Value)
+                                    .HasColumnName("name")
+                                    .IsRequired());
         builder.ComplexProperty(x => x.Address, optBuilder =>
         {
-            optBuilder.Property(x => x.City).HasColumnName("city").IsRequired();
-            optBuilder.Property(x => x.Building).HasConversion(new MaybeConverter<string>())
-                .HasColumnName("building");
-            optBuilder.Property(x => x.Street).HasConversion(new MaybeConverter<string>())
-                .HasColumnName("street");
-            optBuilder.Property(x => x.Country).HasColumnName("country").IsRequired();
+            optBuilder.Property(x => x.City)
+                      .HasColumnName("city")
+                      .IsRequired();
+            optBuilder.Property(x => x.Building)
+                      .HasColumnName("building");
+            optBuilder.Property(x => x.Street)
+                      .HasColumnName("street");
+            optBuilder.Property(x => x.Country)
+                      .HasColumnName("country")
+                      .IsRequired();
         });
         builder.Property(x => x.CreatedAt)
-            .HasColumnName("created_at");
+               .HasColumnName("created_at");
         builder.Property(x => x.UpdatedAt)
-            .HasConversion(new MaybeConverter<DateTime>())
-            .HasColumnName("updated_at");
+               .HasColumnName("updated_at");
     }
 }

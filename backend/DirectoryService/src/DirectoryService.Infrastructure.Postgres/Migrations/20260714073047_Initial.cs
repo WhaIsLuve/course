@@ -18,7 +18,7 @@ namespace DirectoryService.Infrastructure.Postgres.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     parent_id = table.Column<Guid>(type: "uuid", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     name = table.Column<string>(type: "text", nullable: false),
                     path = table.Column<string>(type: "text", nullable: false),
                     slug = table.Column<string>(type: "text", nullable: false)
@@ -40,11 +40,11 @@ namespace DirectoryService.Infrastructure.Postgres.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    building = table.Column<string>(type: "text", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    building = table.Column<string>(type: "text", nullable: true),
                     city = table.Column<string>(type: "text", nullable: false),
                     country = table.Column<string>(type: "text", nullable: false),
-                    street = table.Column<string>(type: "text", nullable: false),
+                    street = table.Column<string>(type: "text", nullable: true),
                     name = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
@@ -58,7 +58,7 @@ namespace DirectoryService.Infrastructure.Postgres.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     name = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>

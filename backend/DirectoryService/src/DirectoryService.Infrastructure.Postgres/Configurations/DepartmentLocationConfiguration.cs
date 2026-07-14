@@ -12,22 +12,24 @@ internal sealed class DepartmentLocationConfiguration : IEntityTypeConfiguration
     {
         builder.ToTable("department_locations");
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id).ValueGeneratedNever().HasColumnName("id");
+        builder.Property(x => x.Id)
+               .ValueGeneratedNever()
+               .HasColumnName("id");
         builder.Property(x => x.IsPrimary)
-            .HasColumnName("is_primary");
+               .HasColumnName("is_primary");
         builder.Property(x => x.CreatedAt)
-            .HasColumnName("created_at");
+               .HasColumnName("created_at");
         builder.Property(x => x.LocationId)
-            .HasColumnName("location_id");
+               .HasColumnName("location_id");
         builder.Property(x => x.DepartmentId)
-            .HasColumnName("department_id");
+               .HasColumnName("department_id");
         builder.HasOne<Department>()
-            .WithMany()
-            .HasForeignKey(x => x.DepartmentId)
-            .OnDelete(DeleteBehavior.Cascade);
+               .WithMany()
+               .HasForeignKey(x => x.DepartmentId)
+               .OnDelete(DeleteBehavior.Cascade);
         builder.HasOne<Location>()
-            .WithMany()
-            .HasForeignKey(x => x.LocationId)
-            .OnDelete(DeleteBehavior.Cascade);
+               .WithMany()
+               .HasForeignKey(x => x.LocationId)
+               .OnDelete(DeleteBehavior.Cascade);
     }
 }
