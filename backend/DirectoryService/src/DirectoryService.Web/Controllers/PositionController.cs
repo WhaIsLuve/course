@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using DirectoryService.Contracts.Positions;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DirectoryService.Web.Controllers;
 
@@ -9,7 +10,7 @@ public sealed class PositionController : ControllerBase
 #pragma warning restore CA1515
 {
 	[HttpPost]
-	public async Task<IResult> Create([FromBody] string name, CancellationToken cancellationToken)
+	public async Task<IResult> Create([FromBody] CreatePositionDto dto, CancellationToken cancellationToken)
 	{
 		HttpContext.Response.Headers.Append("Location", Guid.CreateVersion7().ToString());
 		return TypedResults.Created();
@@ -29,7 +30,7 @@ public sealed class PositionController : ControllerBase
 
 	[HttpPut("{id:guid}")]
 	public async Task<IResult> Update([FromRoute] Guid id,
-		[FromBody] string name,
+		[FromBody] UpdatePositionDto dto,
 		CancellationToken cancellationToken)
 	{
 		return TypedResults.Ok();
