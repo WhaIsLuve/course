@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DirectoryService.Infrastructure.Postgres.Repositories;
 
-internal sealed class EfCoreLocationRepository(AppDbContext dbContext) : ILocationRepository
+internal sealed class LocationRepository(AppDbContext dbContext) : ILocationRepository
 {
 	private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
@@ -12,6 +12,12 @@ internal sealed class EfCoreLocationRepository(AppDbContext dbContext) : ILocati
 	{
 		_dbContext.Locations.Add(location);
 		return _dbContext.SaveChangesAsync(cancellationToken);
+	}
+
+	public async Task<IReadOnlyList<Location>> GetByIdsAsync(IReadOnlyList<Guid> locationIds,
+		CancellationToken cancellationToken = default)
+	{
+		return await _dbContext.Locations.Where(x => locationIds.Contains(x.Id)).ToListAsync(cancellationToken);
 	}
 
 	public Task<bool> ExistWithSameNameAsync(string name, CancellationToken cancellationToken = default)

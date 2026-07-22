@@ -4,7 +4,7 @@ namespace DirectoryService.Domain.Locations;
 
 public record LocationName
 {
-    private const int MaxLength = 200;
+    public const int MaxLength = 200;
 
     private LocationName(string value)
     {

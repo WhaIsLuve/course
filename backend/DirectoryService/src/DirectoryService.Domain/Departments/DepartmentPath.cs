@@ -14,7 +14,7 @@ public partial record DepartmentPath
 
     public string Value { get; }
 
-    [GeneratedRegex(@"^[a-z0-9][a-z0-9_-]*[a-z0-9]$|^[a-z0-9]$", RegexOptions.Compiled, 1000)]
+    [GeneratedRegex("^[a-z0-9][a-z0-9_-]*[a-z0-9]$|^[a-z0-9]$", RegexOptions.Compiled, 1000)]
     private static partial Regex Regex { get; }
 
     public static Result<DepartmentPath, string> Create(string value)

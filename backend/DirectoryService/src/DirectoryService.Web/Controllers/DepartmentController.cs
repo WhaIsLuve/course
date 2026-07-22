@@ -1,4 +1,5 @@
 ﻿using DirectoryService.Contracts.Departments;
+using DirectoryService.Core.Departments;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DirectoryService.Web.Controllers;
@@ -6,13 +7,16 @@ namespace DirectoryService.Web.Controllers;
 [ApiController]
 [Route("api/v1/departments")]
 #pragma warning disable CA1515
-public sealed class DepartmentController : ControllerBase
+public sealed class DepartmentController(IDepartmentService departmentService) : ControllerBase
 #pragma warning restore CA1515
 {
+    private readonly IDepartmentService _departmentService = departmentService ?? throw new ArgumentNullException(nameof(departmentService));
+
     [HttpPost]
     public async Task<IResult> Create([FromBody] CreateDepartmentDto dto, CancellationToken cancellationToken)
     {
-        HttpContext.Response.Headers.Append("Location", Guid.CreateVersion7().ToString());
+        var id = await _departmentService.CreateAsync(dto, cancellationToken);
+        HttpContext.Response.Headers.Append("Location", id.ToString());
         return TypedResults.Created();
     }
 

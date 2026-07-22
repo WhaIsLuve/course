@@ -1,4 +1,5 @@
-﻿using DirectoryService.Core.Locations;
+﻿using DirectoryService.Core.Departments;
+using DirectoryService.Core.Locations;
 using DirectoryService.Infrastructure.Postgres.DataStorage;
 using DirectoryService.Infrastructure.Postgres.Repositories;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,10 +10,8 @@ public static class ServiceCollectionExtensions
 {
 	public static IServiceCollection AddInfrastructure(this IServiceCollection services)
 	{
-#pragma warning disable S125
-		// services.AddScoped<ILocationRepository, DapperLocationsRepository>();
-#pragma warning restore S125
-		services.AddScoped<ILocationRepository, EfCoreLocationRepository>();
+		services.AddScoped<ILocationRepository, LocationRepository>();
+		services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 		services.AddSingleton<IDbConnectionFactory, NpgsqlDbConnectionFactory>();
 		return services;
 	}

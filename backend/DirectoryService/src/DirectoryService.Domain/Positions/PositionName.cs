@@ -4,7 +4,7 @@ namespace DirectoryService.Domain.Positions;
 
 public record PositionName
 {
-    private const int MaxLength = 200;
+    public const int MaxLength = 200;
 
     private PositionName(string value)
     {
