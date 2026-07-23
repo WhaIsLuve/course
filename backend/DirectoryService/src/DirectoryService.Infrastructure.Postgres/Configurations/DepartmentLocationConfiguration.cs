@@ -15,8 +15,6 @@ internal sealed class DepartmentLocationConfiguration : IEntityTypeConfiguration
         builder.Property(x => x.Id)
                .ValueGeneratedNever()
                .HasColumnName("id");
-        builder.Property(x => x.IsPrimary)
-               .HasColumnName("is_primary");
         builder.Property(x => x.CreatedAt)
                .HasColumnName("created_at");
         builder.Property(x => x.LocationId)

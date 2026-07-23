@@ -4,10 +4,10 @@ namespace DirectoryService.Domain.Locations;
 
 public record Address
 {
-    private const int CountryMaxLength = 200;
-    private const int CityMaxLength = 200;
-    private const int StreetMaxLength = 200;
-    private const int BuildingMaxLength = 50;
+    public const int CountryMaxLength = 200;
+    public const int CityMaxLength = 200;
+    public const int StreetMaxLength = 200;
+    public const int BuildingMaxLength = 50;
 
     private Address(string country, string city, string? street, string? building)
     {

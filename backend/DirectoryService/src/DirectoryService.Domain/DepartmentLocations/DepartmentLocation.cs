@@ -4,12 +4,11 @@ namespace DirectoryService.Domain.DepartmentLocations;
 
 public sealed class DepartmentLocation : Entity<Guid>
 {
-    private DepartmentLocation(Guid id, Guid departmentId, Guid locationId, bool isPrimary, DateTime createdAt) :
+    private DepartmentLocation(Guid id, Guid departmentId, Guid locationId, DateTime createdAt) :
         base(id)
     {
         DepartmentId = departmentId;
         LocationId = locationId;
-        IsPrimary = isPrimary;
         CreatedAt = createdAt;
     }
 
@@ -21,15 +20,12 @@ public sealed class DepartmentLocation : Entity<Guid>
 
     public Guid LocationId { get; }
 
-    public bool IsPrimary { get; private set; }
-
     public DateTime CreatedAt { get; }
 
     public static Result<DepartmentLocation, string> Create(
         Guid id,
         Guid departmentId,
         Guid locationId,
-        bool isPrimary,
         DateTime createdAt)
     {
         if (id == Guid.Empty)
@@ -45,12 +41,6 @@ public sealed class DepartmentLocation : Entity<Guid>
             return Result.Failure<DepartmentLocation, string>("CreatedAt is required");
 
         return Result.Success<DepartmentLocation, string>(
-            new DepartmentLocation(id, departmentId, locationId, isPrimary, createdAt));
-    }
-
-    public UnitResult<string> SetPrimary(bool isPrimary)
-    {
-        IsPrimary = isPrimary;
-        return UnitResult.Success<string>();
+            new DepartmentLocation(id, departmentId, locationId, createdAt));
     }
 }
