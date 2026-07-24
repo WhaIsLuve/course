@@ -7,7 +7,7 @@ using FluentValidation;
 
 namespace DirectoryService.Core.Departments;
 
-public class DepartmentService(
+public sealed class DepartmentService(
 	IValidator<CreateDepartmentDto> validator,
 	IDepartmentRepository repository,
 	TimeProvider timeProvider,

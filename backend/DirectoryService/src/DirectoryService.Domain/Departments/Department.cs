@@ -77,7 +77,7 @@ public sealed class Department : Entity<Guid>
 		if (CreatedAt == updatedAt)
 			return UnitResult.Failure("UpdatedAt cannot be equal to CreatedAt");
 
-		if (parentInfo != null && parentInfo.Id != Guid.Empty)
+		if (parentInfo != null && parentInfo.Id == Guid.Empty)
 		{
 			return UnitResult.Failure("ParentId cannot be empty");
 		}

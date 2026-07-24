@@ -4,7 +4,7 @@ using FluentValidation;
 
 namespace DirectoryService.Core.Locations;
 
-internal sealed class LocationService(
+public sealed class LocationService(
     TimeProvider timeProvider,
     ILocationRepository locationRepository,
     IValidator<CreateLocationDto> createLocationDtoValidator)
