@@ -32,8 +32,8 @@ public sealed class DepartmentController(IDepartmentService departmentService) :
         return TypedResults.Ok();
     }
 
-    [HttpPut("{id:guid}")]
-    public async Task<IResult> Update([FromRoute] Guid id, [FromBody] UpdateDepartmentDto dto, CancellationToken cancellationToken)
+    [HttpPatch("{id:guid}")]
+    public async Task<IResult> UpdateName([FromRoute] Guid id, [FromBody] UpdateDepartmentNameDto dto, CancellationToken cancellationToken)
     {
         return TypedResults.Ok();
     }

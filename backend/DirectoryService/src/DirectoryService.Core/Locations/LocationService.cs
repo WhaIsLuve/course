@@ -45,4 +45,9 @@ public sealed class LocationService(
 
         return id;
     }
+
+    public Task UpdateAsync(Guid id, UpdateLocationDto dto, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

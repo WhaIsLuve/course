@@ -33,7 +33,7 @@ public sealed class LocationController(ILocationService locationService) : Contr
         return TypedResults.Ok();
     }
 
-    [HttpPut("{id:guid}")]
+    [HttpPatch("{id:guid}")]
     public async Task<IResult> Update([FromRoute] Guid id,
         [FromBody] UpdateLocationDto dto,
         CancellationToken cancellationToken)
