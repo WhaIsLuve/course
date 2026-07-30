@@ -28,6 +28,8 @@ public class DepartmentNameTests
 #pragma warning restore CS8604
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("value is required", result.Error);
+        var errorMessages = result.Error.Messages;
+        Assert.Single(errorMessages);
+        Assert.Equal("Наименование указано некоректно", errorMessages.Single().Message);
     }
 }

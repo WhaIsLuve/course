@@ -37,7 +37,7 @@ public class DepartmentTests
         var result = Department.Create(Guid.Empty, _validName, _validSlug, null, _validDate);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Id cannot be empty", result.Error);
+        Assert.Equal("Id cannot be empty", result.Error.GetMessage());
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public class DepartmentTests
         var result = Department.Create(Guid.NewGuid(), _validName, _validSlug, parentInfo, _validDate);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("ParentId cannot be empty", result.Error);
+        Assert.Equal("ParentId cannot be empty", result.Error.GetMessage());
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class DepartmentTests
         var result = Department.Create(Guid.NewGuid(), _validName, _validSlug, null, default);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("CreatedAt is required", result.Error);
+        Assert.Equal("CreatedAt is required", result.Error.GetMessage());
     }
 
     [Fact]
@@ -94,7 +94,7 @@ public class DepartmentTests
         var result = department.Update(_validName, null, default);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("UpdatedAt is required", result.Error);
+        Assert.Equal("UpdatedAt is required", result.Error.GetMessage());
     }
 
     [Fact]

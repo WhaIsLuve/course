@@ -4,70 +4,78 @@ namespace DirectoryService.UnitTests.Domain.DepartmentLocations;
 
 public class DepartmentLocationTests
 {
-    private readonly DateTime _validDate = DateTime.UtcNow;
+	private readonly DateTime _validDate = DateTime.UtcNow;
 
-    [Fact]
-    public void CreateValidDepartmentLocationReturnsSuccess()
-    {
-        var id = Guid.NewGuid();
-        var departmentId = Guid.NewGuid();
-        var locationId = Guid.NewGuid();
+	[Fact]
+	public void CreateValidDepartmentLocationReturnsSuccess()
+	{
+		var id = Guid.NewGuid();
+		var departmentId = Guid.NewGuid();
+		var locationId = Guid.NewGuid();
 
-        var result = DepartmentLocation.Create(id, departmentId, locationId, _validDate);
+		var result = DepartmentLocation.Create(id, departmentId, locationId, _validDate);
 
-        Assert.True(result.IsSuccess);
-        Assert.Equal(id, result.Value.Id);
-        Assert.Equal(departmentId, result.Value.DepartmentId);
-        Assert.Equal(locationId, result.Value.LocationId);
-        Assert.Equal(_validDate, result.Value.CreatedAt);
-    }
+		Assert.True(result.IsSuccess);
+		Assert.Equal(id, result.Value.Id);
+		Assert.Equal(departmentId, result.Value.DepartmentId);
+		Assert.Equal(locationId, result.Value.LocationId);
+		Assert.Equal(_validDate, result.Value.CreatedAt);
+	}
 
-    [Fact]
-    public void CreateWithEmptyIdReturnsFailure()
-    {
-        var departmentId = Guid.NewGuid();
-        var locationId = Guid.NewGuid();
+	[Fact]
+	public void CreateWithEmptyIdReturnsFailure()
+	{
+		var departmentId = Guid.NewGuid();
+		var locationId = Guid.NewGuid();
 
-        var result = DepartmentLocation.Create(Guid.Empty, departmentId, locationId, _validDate);
+		var result = DepartmentLocation.Create(Guid.Empty, departmentId, locationId, _validDate);
 
-        Assert.False(result.IsSuccess);
-        Assert.Equal("Id cannot be empty", result.Error);
-    }
+		Assert.False(result.IsSuccess);
+		var errorMessages = result.Error.Messages;
+		Assert.Single(errorMessages);
+		Assert.Equal("Id cannot be empty", errorMessages.Single().Message);
+	}
 
-    [Fact]
-    public void CreateWithEmptyDepartmentIdReturnsFailure()
-    {
-        var id = Guid.NewGuid();
-        var locationId = Guid.NewGuid();
+	[Fact]
+	public void CreateWithEmptyDepartmentIdReturnsFailure()
+	{
+		var id = Guid.NewGuid();
+		var locationId = Guid.NewGuid();
 
-        var result = DepartmentLocation.Create(id, Guid.Empty, locationId, _validDate);
+		var result = DepartmentLocation.Create(id, Guid.Empty, locationId, _validDate);
 
-        Assert.False(result.IsSuccess);
-        Assert.Equal("DepartmentId cannot be empty", result.Error);
-    }
+		Assert.False(result.IsSuccess);
+		var errorMessages = result.Error.Messages;
+		Assert.Single(errorMessages);
+		Assert.Equal("DepartmentId cannot be empty", errorMessages.Single().Message);
+	}
 
-    [Fact]
-    public void CreateWithEmptyLocationIdReturnsFailure()
-    {
-        var id = Guid.NewGuid();
-        var departmentId = Guid.NewGuid();
+	[Fact]
+	public void CreateWithEmptyLocationIdReturnsFailure()
+	{
+		var id = Guid.NewGuid();
+		var departmentId = Guid.NewGuid();
 
-        var result = DepartmentLocation.Create(id, departmentId, Guid.Empty, _validDate);
+		var result = DepartmentLocation.Create(id, departmentId, Guid.Empty, _validDate);
 
-        Assert.False(result.IsSuccess);
-        Assert.Equal("LocationId cannot be empty", result.Error);
-    }
+		Assert.False(result.IsSuccess);
+		var errorMessages = result.Error.Messages;
+		Assert.Single(errorMessages);
+		Assert.Equal("LocationId cannot be empty", errorMessages.Single().Message);
+	}
 
-    [Fact]
-    public void CreateWithDefaultCreatedAtReturnsFailure()
-    {
-        var id = Guid.NewGuid();
-        var departmentId = Guid.NewGuid();
-        var locationId = Guid.NewGuid();
+	[Fact]
+	public void CreateWithDefaultCreatedAtReturnsFailure()
+	{
+		var id = Guid.NewGuid();
+		var departmentId = Guid.NewGuid();
+		var locationId = Guid.NewGuid();
 
-        var result = DepartmentLocation.Create(id, departmentId, locationId, default);
+		var result = DepartmentLocation.Create(id, departmentId, locationId, default);
 
-        Assert.False(result.IsSuccess);
-        Assert.Equal("CreatedAt is required", result.Error);
-    }
+		Assert.False(result.IsSuccess);
+		var errorMessages = result.Error.Messages;
+		Assert.Single(errorMessages);
+		Assert.Equal("CreatedAt is required", errorMessages.Single().Message);
+	}
 }

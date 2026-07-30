@@ -30,7 +30,7 @@ public class DepartmentPathTests
 #pragma warning restore CS8604
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Path is required", result.Error);
+        Assert.Equal("Путь пустой", result.Error.GetMessage());
     }
 
     [Theory]
@@ -42,7 +42,7 @@ public class DepartmentPathTests
         var result = DepartmentPath.Create(invalidPath);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Path must start with /", result.Error);
+        Assert.Equal("Путь должен начинаться с /", result.Error.GetMessage());
     }
 
     [Theory]
@@ -54,7 +54,7 @@ public class DepartmentPathTests
         var result = DepartmentPath.Create(invalidPath);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Path cannot contain //", result.Error);
+        Assert.Equal("Путь не может содержать //", result.Error.GetMessage());
     }
 
     [Theory]
@@ -64,7 +64,7 @@ public class DepartmentPathTests
         var result = DepartmentPath.Create(invalidPath);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Path cannot contain empty segments", result.Error);
+        Assert.Equal("Путь не может содержать пустые сегменты", result.Error.GetMessage());
     }
 
     [Theory]
@@ -83,8 +83,7 @@ public class DepartmentPathTests
         var result = DepartmentPath.Create(invalidPath);
 
         Assert.False(result.IsSuccess);
-        Assert.StartsWith("Invalid path segment:", result.Error, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Must contain only lowercase letters, numbers, hyphens and underscores", result.Error,
+        Assert.Contains("Путь может содержать только символы в нижнем регистре и цифры", result.Error.GetMessage(),
             StringComparison.OrdinalIgnoreCase);
     }
 }

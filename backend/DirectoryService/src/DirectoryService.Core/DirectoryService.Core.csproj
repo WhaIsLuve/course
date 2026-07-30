@@ -2,6 +2,7 @@
     <ItemGroup>
         <ProjectReference Include="../DirectoryService.Contracts/DirectoryService.Contracts.csproj"/>
         <ProjectReference Include="../DirectoryService.Domain/DirectoryService.Domain.csproj"/>
+        <ProjectReference Include="..\DirectoryService.SharedKernel\DirectoryService.SharedKernel.csproj" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,4 +1,5 @@
 ﻿using CSharpFunctionalExtensions;
+using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.Domain.Locations;
 
@@ -29,36 +30,36 @@ public record Address
 
     public string? Building { get; }
 
-    public static Result<Address, string> Create(
+    public static Result<Address, Error> Create(
         string country,
         string city,
         string? street,
         string? building)
     {
         if (string.IsNullOrWhiteSpace(country))
-            return Result.Failure<Address, string>("Country is required");
+            return Result.Failure<Address, Error>(Error.Validation("location.address.country", "Country is required"));
 
         if (country.Length > CountryMaxLength)
-            return Result.Failure<Address, string>($"Country cannot exceed {CountryMaxLength} characters");
+            return Result.Failure<Address, Error>(Error.Conflict("location.address.country", $"Country cannot exceed {CountryMaxLength} characters"));
 
         if (string.IsNullOrWhiteSpace(city))
-            return Result.Failure<Address, string>("City is required");
+            return Result.Failure<Address, Error>(Error.Validation("location.address.city", "City is required"));
 
         if (city.Length > CityMaxLength)
-            return Result.Failure<Address, string>($"City cannot exceed {CityMaxLength} characters");
+            return Result.Failure<Address, Error>(Error.Validation("location.address.city", $"City cannot exceed {CityMaxLength} characters"));
 
         if (street != null && string.IsNullOrWhiteSpace(street))
-            return Result.Failure<Address, string>("Street cannot be empty when specified");
+            return Result.Failure<Address, Error>(Error.Validation("location.address.street", "Street is required"));
 
         if (street is { Length: > StreetMaxLength })
-            return Result.Failure<Address, string>($"Street cannot exceed {StreetMaxLength} characters");
+            return Result.Failure<Address, Error>(Error.Validation("location.address.street", $"Street cannot exceed {StreetMaxLength} characters"));
 
         if (building != null && string.IsNullOrWhiteSpace(building))
-            return Result.Failure<Address, string>("Building cannot be empty when specified");
+            return Result.Failure<Address, Error>(Error.Validation("location.address.building", "Building is required"));
 
         if (building is { Length: > BuildingMaxLength })
-            return Result.Failure<Address, string>($"Building cannot exceed {BuildingMaxLength} characters");
+            return Result.Failure<Address, Error>(Error.Validation("location.address.building", $"Building cannot exceed {BuildingMaxLength} characters"));
 
-        return Result.Success<Address, string>(new Address(country, city, street, building));
+        return Result.Success<Address, Error>(new Address(country, city, street, building));
     }
 }

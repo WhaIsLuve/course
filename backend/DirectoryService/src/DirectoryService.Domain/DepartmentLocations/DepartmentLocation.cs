@@ -1,4 +1,5 @@
 ﻿using CSharpFunctionalExtensions;
+using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.Domain.DepartmentLocations;
 
@@ -22,25 +23,25 @@ public sealed class DepartmentLocation : Entity<Guid>
 
     public DateTime CreatedAt { get; }
 
-    public static Result<DepartmentLocation, string> Create(
+    public static Result<DepartmentLocation, Error> Create(
         Guid id,
         Guid departmentId,
         Guid locationId,
         DateTime createdAt)
     {
         if (id == Guid.Empty)
-            return Result.Failure<DepartmentLocation, string>("Id cannot be empty");
+            return Result.Failure<DepartmentLocation, Error>(Error.Validation("department.locations.id.invalid", "Id cannot be empty"));
 
         if (departmentId == Guid.Empty)
-            return Result.Failure<DepartmentLocation, string>("DepartmentId cannot be empty");
+            return Result.Failure<DepartmentLocation, Error>(Error.Validation("department.location.department.id.invalid", "DepartmentId cannot be empty"));
 
         if (locationId == Guid.Empty)
-            return Result.Failure<DepartmentLocation, string>("LocationId cannot be empty");
+            return Result.Failure<DepartmentLocation, Error>(Error.Validation("department.location.location.id.invalid","LocationId cannot be empty"));
 
         if (createdAt == default)
-            return Result.Failure<DepartmentLocation, string>("CreatedAt is required");
+            return Result.Failure<DepartmentLocation, Error>(Error.Validation("department.location.createAt.invalid", "CreatedAt cannot be empty"));
 
-        return Result.Success<DepartmentLocation, string>(
+        return Result.Success<DepartmentLocation, Error>(
             new DepartmentLocation(id, departmentId, locationId, createdAt));
     }
 }

@@ -1,4 +1,5 @@
 ﻿using CSharpFunctionalExtensions;
+using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.Domain.Locations;
 
@@ -13,14 +14,14 @@ public record LocationName
 
     public string Value { get; }
 
-    public static Result<LocationName, string> Create(string value)
+    public static Result<LocationName, Error> Create(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            return Result.Failure<LocationName, string>("Name is required");
+            return Result.Failure<LocationName, Error>(Error.Validation("location.name", "Name is required"));
 
         if (value.Length > MaxLength)
-            return Result.Failure<LocationName, string>($"Name cannot exceed {MaxLength} characters");
+            return Result.Failure<LocationName, Error>(Error.Validation("location.name", $"Name cannot exceed {MaxLength} characters"));
 
-        return Result.Success<LocationName, string>(new LocationName(value));
+        return Result.Success<LocationName, Error>(new LocationName(value));
     }
 }
