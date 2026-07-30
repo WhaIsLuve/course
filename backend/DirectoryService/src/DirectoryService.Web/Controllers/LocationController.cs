@@ -38,6 +38,7 @@ public sealed class LocationController(ILocationService locationService) : Contr
         [FromBody] UpdateLocationDto dto,
         CancellationToken cancellationToken)
     {
+        await _locationService.UpdateAsync(id, dto, cancellationToken);
         return TypedResults.Ok();
     }
 

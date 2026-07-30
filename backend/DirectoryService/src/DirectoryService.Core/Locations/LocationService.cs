@@ -5,49 +5,76 @@ using FluentValidation;
 namespace DirectoryService.Core.Locations;
 
 public sealed class LocationService(
-    TimeProvider timeProvider,
-    ILocationRepository locationRepository,
-    IValidator<CreateLocationDto> createLocationDtoValidator)
-    : ILocationService
+	TimeProvider timeProvider,
+	ILocationRepository locationRepository,
+	IValidator<CreateLocationDto> createLocationDtoValidator,
+	IValidator<UpdateLocationDto> updateLocationDtoValidator)
+	: ILocationService
 {
-    private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+	private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
-    private readonly ILocationRepository _locationRepository =
-        locationRepository ?? throw new ArgumentNullException(nameof(locationRepository));
+	private readonly ILocationRepository _locationRepository =
+		locationRepository ?? throw new ArgumentNullException(nameof(locationRepository));
 
-    private readonly IValidator<CreateLocationDto> _createLocationDtoValidator = createLocationDtoValidator ??
-        throw new ArgumentNullException(nameof(createLocationDtoValidator));
+	private readonly IValidator<CreateLocationDto> _createLocationDtoValidator = createLocationDtoValidator ??
+		throw new ArgumentNullException(nameof(createLocationDtoValidator));
 
-    public async Task<Guid> CreateAsync(CreateLocationDto dto, CancellationToken cancellationToken)
-    {
-        var validationResult = await _createLocationDtoValidator.ValidateAsync(dto, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            throw new ValidationException(validationResult.Errors);
-        }
+	private readonly IValidator<UpdateLocationDto> _updateLocationDtoValidator = updateLocationDtoValidator ??
+		throw new ArgumentNullException(nameof(updateLocationDtoValidator));
 
-        var existWithSameName = await _locationRepository.ExistWithSameNameAsync(dto.Name, cancellationToken);
-        if (existWithSameName) throw new InvalidOperationException("Локация с таким наименование уже существует");
-        var id = Guid.CreateVersion7();
-        var locationName = LocationName.Create(dto.Name);
-        var address = Address.Create(dto.Address.Country,
-            dto.Address.City,
-            dto.Address.Street,
-            dto.Address.Building);
-        if (address.IsFailure) throw new ValidationException(address.Error);
-        if (locationName.IsFailure) throw new ValidationException(locationName.Error);
+	public async Task<Guid> CreateAsync(CreateLocationDto dto, CancellationToken cancellationToken)
+	{
+		var validationResult = await _createLocationDtoValidator.ValidateAsync(dto, cancellationToken);
+		if (!validationResult.IsValid)
+		{
+			throw new ValidationException(validationResult.Errors);
+		}
 
-        var location = Location.Create(id, locationName.Value, address.Value, _timeProvider.GetUtcNow()
-            .UtcDateTime);
-        if (location.IsFailure) throw new InvalidOperationException(location.Error);
+		var existWithSameName = await _locationRepository.ExistWithSameNameAsync(dto.Name, cancellationToken);
+		if (existWithSameName) throw new InvalidOperationException("Локация с таким наименование уже существует");
+		var id = Guid.CreateVersion7();
+		var locationName = LocationName.Create(dto.Name);
+		var address = Address.Create(dto.Address.Country,
+			dto.Address.City,
+			dto.Address.Street,
+			dto.Address.Building);
+		if (address.IsFailure) throw new ValidationException(address.Error);
+		if (locationName.IsFailure) throw new ValidationException(locationName.Error);
 
-        await _locationRepository.AddAsync(location.Value, cancellationToken);
+		var location = Location.Create(id, locationName.Value, address.Value, _timeProvider.GetUtcNow()
+			.UtcDateTime);
+		if (location.IsFailure) throw new InvalidOperationException(location.Error);
 
-        return id;
-    }
+		_locationRepository.Add(location.Value);
+		await _locationRepository.Save(cancellationToken);
 
-    public Task UpdateAsync(Guid id, UpdateLocationDto dto, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+		return id;
+	}
+
+	public async Task UpdateAsync(Guid id, UpdateLocationDto dto, CancellationToken cancellationToken = default)
+	{
+		var validationResult = await _updateLocationDtoValidator.ValidateAsync(dto, cancellationToken);
+		if (!validationResult.IsValid)
+		{
+			throw new ValidationException(validationResult.Errors);
+		}
+
+		var location = await _locationRepository.GetByIdAsync(id, cancellationToken) ??
+		               throw new InvalidOperationException("Локация не найдена");
+		var locationName = LocationName.Create(dto.Name);
+		var address = Address.Create(dto.Address.Country,
+			dto.Address.City,
+			dto.Address.Street,
+			dto.Address.Building);
+		if (address.IsFailure) throw new ValidationException(address.Error);
+		if (locationName.IsFailure) throw new ValidationException(locationName.Error);
+		if (!string.Equals(location.Name.Value, dto.Name, StringComparison.OrdinalIgnoreCase))
+		{
+			var existWithSameName = await _locationRepository.ExistWithSameNameAsync(dto.Name, cancellationToken);
+			if (existWithSameName) throw new InvalidOperationException("Локация с таким наименование уже существует");
+		}
+
+		location.Update(locationName.Value, address.Value, _timeProvider.GetUtcNow().UtcDateTime);
+		await _locationRepository.Save(cancellationToken);
+	}
 }
