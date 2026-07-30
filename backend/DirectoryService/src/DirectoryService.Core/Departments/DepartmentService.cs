@@ -1,5 +1,4 @@
-﻿using CSharpFunctionalExtensions;
-using DirectoryService.Contracts.Departments;
+﻿using DirectoryService.Contracts.Departments;
 using DirectoryService.Core.Locations;
 using DirectoryService.Domain.DepartmentLocations;
 using DirectoryService.Domain.Departments;
@@ -7,15 +6,19 @@ using FluentValidation;
 
 namespace DirectoryService.Core.Departments;
 
-public class DepartmentService(
-	IValidator<CreateDepartmentDto> validator,
+public sealed class DepartmentService(
+	IValidator<CreateDepartmentDto> createDepartmentValidator,
 	IDepartmentRepository repository,
 	TimeProvider timeProvider,
-	ILocationRepository locationRepository)
+	ILocationRepository locationRepository,
+	IValidator<UpdateDepartmentNameDto> updateDepartmentNameValidator)
 	: IDepartmentService
 {
-	private readonly IValidator<CreateDepartmentDto> _validator =
-		validator ?? throw new ArgumentNullException(nameof(validator));
+	private readonly IValidator<CreateDepartmentDto> _createDepartmentValidator =
+		createDepartmentValidator ?? throw new ArgumentNullException(nameof(createDepartmentValidator));
+
+	private readonly IValidator<UpdateDepartmentNameDto> _updateDepartmentNameValidator =
+		updateDepartmentNameValidator ?? throw new ArgumentNullException(nameof(updateDepartmentNameValidator));
 
 	private readonly IDepartmentRepository _departmentRepository =
 		repository ?? throw new ArgumentNullException(nameof(repository));
@@ -27,7 +30,7 @@ public class DepartmentService(
 
 	public async Task<Guid> CreateAsync(CreateDepartmentDto dto, CancellationToken cancellationToken = default)
 	{
-		var validationResult = await _validator.ValidateAsync(dto, cancellationToken);
+		var validationResult = await _createDepartmentValidator.ValidateAsync(dto, cancellationToken);
 		if (!validationResult.IsValid)
 		{
 			throw new ValidationException(validationResult.Errors);
@@ -45,7 +48,8 @@ public class DepartmentService(
 		var name = DepartmentName.Create(dto.Name);
 		var slug = DepartmentSlug.Create(dto.Slug);
 		var parentInfo = parent is null ? null : new ParentInfo(parent.Id, parent.Path);
-		var dateTimeNow = _timeProvider.GetUtcNow().UtcDateTime;
+		var dateTimeNow = _timeProvider.GetUtcNow()
+			.UtcDateTime;
 		if (name.IsFailure) throw new ValidationException(name.Error);
 		if (slug.IsFailure) throw new ValidationException(slug.Error);
 
@@ -63,6 +67,62 @@ public class DepartmentService(
 		return id;
 	}
 
+	public async Task UpdateNameAsync(Guid id, UpdateDepartmentNameDto dto,
+		CancellationToken cancellationToken = default)
+	{
+		var validationResult = await _updateDepartmentNameValidator.ValidateAsync(dto, cancellationToken);
+		if (!validationResult.IsValid)
+		{
+			throw new ValidationException(validationResult.Errors);
+		}
+
+		var department = await _departmentRepository.GetByIdAsync(id, cancellationToken) ??
+		                 throw new InvalidOperationException("Не найден департамент");
+		var newName = DepartmentName.Create(dto.Name);
+		if (newName.IsFailure) throw new ValidationException(newName.Error);
+		var result = department.UpdateName(newName.Value, _timeProvider.GetUtcNow()
+			.UtcDateTime);
+		if (result.IsFailure) throw new InvalidOperationException(result.Error);
+		await _departmentRepository.Save(cancellationToken);
+	}
+
+	public async Task AttachLocation(Guid departmentId, Guid locationId, CancellationToken cancellationToken = default)
+	{
+		var department = await _departmentRepository.GetByIdAsync(departmentId, cancellationToken) ??
+		                 throw new InvalidOperationException("Не найден департамент");
+		var location = await _locationRepository.GetByIdAsync(locationId, cancellationToken) ??
+		               throw new InvalidOperationException("Не найдена локация");
+		var existDepartmentLocation =
+			await _departmentRepository.ExistDepartmentLocation(department.Id, location.Id, cancellationToken);
+		if (existDepartmentLocation)
+		{
+			throw new InvalidOperationException("Связь между локацией и департаментов уже существует.");
+		}
+
+		var departmentLocation = DepartmentLocation.Create(Guid.CreateVersion7(), department.Id, location.Id,
+			_timeProvider.GetUtcNow().UtcDateTime);
+		if (departmentLocation.IsFailure)
+		{
+			throw new InvalidOperationException(departmentLocation.Error);
+		}
+
+		_departmentRepository.AddDepartmentLocations([departmentLocation.Value]);
+		await _departmentRepository.Save(cancellationToken);
+	}
+
+	public async Task DetachLocation(Guid departmentId, Guid locationId, CancellationToken cancellationToken = default)
+	{
+		var department = await _departmentRepository.GetByIdAsync(departmentId, cancellationToken) ??
+		                 throw new InvalidOperationException("Не найден департамент");
+		var location = await _locationRepository.GetByIdAsync(locationId, cancellationToken) ??
+		               throw new InvalidOperationException("Не найдена локация");
+		var departmentLocation =
+			await _departmentRepository.GetDepartmentLocation(department.Id, location.Id, cancellationToken) ??
+			throw new InvalidOperationException("Связи между локацией и департаментов не существует.");
+		_departmentRepository.RemoveDepartmentLocation(departmentLocation);
+		await _departmentRepository.Save(cancellationToken);
+	}
+
 	private async ValueTask AddNewLocationInDepartment(IReadOnlyList<Guid> dtoLocationIds,
 		Department department,
 		DateTime dateTimeNow,
@@ -74,15 +134,19 @@ public class DepartmentService(
 		}
 
 		var locations = await _locationRepository.GetByIdsAsync(dtoLocationIds, cancellationToken);
-		var missedLocations = dtoLocationIds.Except(locations.Select(l => l.Id)).ToList();
+		var missedLocations = dtoLocationIds.Except(locations.Select(l => l.Id))
+			.ToList();
 		if (missedLocations.Count != 0)
 		{
 			throw new InvalidOperationException("Переданы не существующие локации.");
 		}
 
 		var departmentLocation = locations.Select(x =>
-				DepartmentLocation.Create(Guid.CreateVersion7(), department.Id, x.Id, dateTimeNow))
-			.Where(x => x.IsFailure ? throw new ValidationException(x.Error) : x.IsSuccess)
+				DepartmentLocation.Create(Guid.CreateVersion7(), department.Id, x.Id,
+					dateTimeNow))
+			.Where(x => x.IsFailure
+				? throw new ValidationException(x.Error)
+				: x.IsSuccess)
 			.Select(x => x.Value)
 			.ToList();
 

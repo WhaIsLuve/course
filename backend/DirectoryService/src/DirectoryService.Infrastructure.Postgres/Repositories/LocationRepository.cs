@@ -8,10 +8,14 @@ internal sealed class LocationRepository(AppDbContext dbContext) : ILocationRepo
 {
 	private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
-	public Task AddAsync(Location location, CancellationToken cancellationToken = default)
+	public void Add(Location location)
 	{
 		_dbContext.Locations.Add(location);
-		return _dbContext.SaveChangesAsync(cancellationToken);
+	}
+
+	public ValueTask<Location?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+	{
+		return _dbContext.Locations.FindAsync([id], cancellationToken);
 	}
 
 	public async Task<IReadOnlyList<Location>> GetByIdsAsync(IReadOnlyList<Guid> locationIds,
@@ -25,5 +29,10 @@ internal sealed class LocationRepository(AppDbContext dbContext) : ILocationRepo
 #pragma warning disable CA1862, RCS1155, CA1304, MA0011, CA1304, CA1311
 		return _dbContext.Locations.AnyAsync(l => l.Name.Value.ToUpper() == name.ToUpper(), cancellationToken);
 #pragma warning restore CA1311, CA1304, MA0011, CA1304, RCS1155, CA1862
+	}
+
+	public Task Save(CancellationToken cancellationToken = default)
+	{
+		return _dbContext.SaveChangesAsync(cancellationToken);
 	}
 }

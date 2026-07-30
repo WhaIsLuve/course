@@ -10,49 +10,63 @@ namespace DirectoryService.Web.Controllers;
 public sealed class DepartmentController(IDepartmentService departmentService) : ControllerBase
 #pragma warning restore CA1515
 {
-    private readonly IDepartmentService _departmentService = departmentService ?? throw new ArgumentNullException(nameof(departmentService));
+	private readonly IDepartmentService _departmentService =
+		departmentService ?? throw new ArgumentNullException(nameof(departmentService));
 
-    [HttpPost]
-    public async Task<IResult> Create([FromBody] CreateDepartmentDto dto, CancellationToken cancellationToken)
-    {
-        var id = await _departmentService.CreateAsync(dto, cancellationToken);
-        HttpContext.Response.Headers.Append("Location", id.ToString());
-        return TypedResults.Created();
-    }
+	[HttpPost]
+	public async Task<IResult> Create([FromBody] CreateDepartmentDto dto, CancellationToken cancellationToken)
+	{
+		var id = await _departmentService.CreateAsync(dto, cancellationToken);
+		HttpContext.Response.Headers.Append("Location", id.ToString());
+		return TypedResults.Created();
+	}
 
-    [HttpGet]
-    public async Task<IResult> Get(CancellationToken cancellationToken)
-    {
-        return TypedResults.Ok();
-    }
+	[HttpGet]
+	public async Task<IResult> Get(CancellationToken cancellationToken)
+	{
+		return TypedResults.Ok();
+	}
 
-    [HttpGet("{id:guid}")]
-    public async Task<IResult> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
-    {
-        return TypedResults.Ok();
-    }
+	[HttpGet("{id:guid}")]
+	public async Task<IResult> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
+	{
+		return TypedResults.Ok();
+	}
 
-    [HttpPut("{id:guid}")]
-    public async Task<IResult> Update([FromRoute] Guid id, [FromBody] UpdateDepartmentDto dto, CancellationToken cancellationToken)
-    {
-        return TypedResults.Ok();
-    }
+	[HttpPatch("{id:guid}")]
+	public async Task<IResult> UpdateName([FromRoute] Guid id, [FromBody] UpdateDepartmentNameDto dto,
+		CancellationToken cancellationToken)
+	{
+		await _departmentService.UpdateNameAsync(id, dto, cancellationToken);
+		return TypedResults.Ok();
+	}
 
-    [HttpDelete("{id:guid}")]
-    public async Task<IResult> Delete([FromRoute] Guid id, CancellationToken cancellationToken)
-    {
-        return TypedResults.Ok();
-    }
+	[HttpDelete("{id:guid}")]
+	public async Task<IResult> Delete([FromRoute] Guid id, CancellationToken cancellationToken)
+	{
+		return TypedResults.Ok();
+	}
 
-    [HttpPut("{id:guid}/location")]
-    public async Task<IResult> AddLocation([FromRoute] Guid id, [FromQuery] Guid locationId, CancellationToken cancellationToken)
-    {
-        return TypedResults.Ok();
-    }
-    
-    [HttpPut("{id:guid}/position")]
-    public async Task<IResult> AddPosition([FromRoute] Guid id, [FromQuery] Guid positionId, CancellationToken cancellationToken)
-    {
-        return TypedResults.Ok();
-    }
+	[HttpPost("{departmentId:guid}/location/{locationId:guid}")]
+	public async Task<IResult> AttachLocation([FromRoute] Guid departmentId, [FromRoute] Guid locationId,
+		CancellationToken cancellationToken)
+	{
+		await _departmentService.AttachLocation(departmentId, locationId, cancellationToken);
+		return TypedResults.Ok();
+	}
+
+	[HttpDelete("{departmentId:guid}/location/{locationId:guid}")]
+	public async Task<IResult> DetachLocation([FromRoute] Guid departmentId, [FromRoute] Guid locationId,
+		CancellationToken cancellationToken)
+	{
+		await _departmentService.DetachLocation(departmentId, locationId, cancellationToken);
+		return TypedResults.Ok();
+	}
+
+	[HttpPut("{id:guid}/position")]
+	public async Task<IResult> AddPosition([FromRoute] Guid id, [FromQuery] Guid positionId,
+		CancellationToken cancellationToken)
+	{
+		return TypedResults.Ok();
+	}
 }
