@@ -40,7 +40,7 @@ public record Address
             return Result.Failure<Address, Error>(Error.Validation("location.address.country", "Country is required"));
 
         if (country.Length > CountryMaxLength)
-            return Result.Failure<Address, Error>(Error.Conflict("location.address.country", $"Country cannot exceed {CountryMaxLength} characters"));
+            return Result.Failure<Address, Error>(Error.Validation("location.address.country", $"Country cannot exceed {CountryMaxLength} characters"));
 
         if (string.IsNullOrWhiteSpace(city))
             return Result.Failure<Address, Error>(Error.Validation("location.address.city", "City is required"));

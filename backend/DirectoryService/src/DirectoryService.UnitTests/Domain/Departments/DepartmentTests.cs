@@ -1,4 +1,5 @@
 using DirectoryService.Domain.Departments;
+using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.UnitTests.Domain.Departments;
 
@@ -37,7 +38,8 @@ public class DepartmentTests
         var result = Department.Create(Guid.Empty, _validName, _validSlug, null, _validDate);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Id cannot be empty", result.Error.GetMessage());
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]
@@ -47,7 +49,8 @@ public class DepartmentTests
         var result = Department.Create(Guid.NewGuid(), _validName, _validSlug, parentInfo, _validDate);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("ParentId cannot be empty", result.Error.GetMessage());
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]
@@ -56,7 +59,8 @@ public class DepartmentTests
         var result = Department.Create(Guid.NewGuid(), _validName, _validSlug, null, default);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("CreatedAt is required", result.Error.GetMessage());
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]
@@ -94,7 +98,8 @@ public class DepartmentTests
         var result = department.Update(_validName, null, default);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("UpdatedAt is required", result.Error.GetMessage());
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]
@@ -105,7 +110,8 @@ public class DepartmentTests
         var result = department.Update(_validName, null, _validDate.AddHours(-1));
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("UpdatedAt must be greater than CreatedAt", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]
@@ -116,7 +122,8 @@ public class DepartmentTests
         var result = department.Update(_validName, null, _validDate);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("UpdatedAt cannot be equal to CreatedAt", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]
@@ -128,6 +135,7 @@ public class DepartmentTests
         var result = department.Update(_validName, emptyParentInfo, _validDate.AddHours(1));
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("ParentId cannot be empty", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 }

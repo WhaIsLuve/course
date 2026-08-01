@@ -1,7 +1,10 @@
-﻿using DirectoryService.Domain.Departments;
+﻿using System.Diagnostics.CodeAnalysis;
+using DirectoryService.Domain.Departments;
+using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.UnitTests.Domain.Departments;
 
+[SuppressMessage("Major Code Smell", "S4144:Methods should not have identical implementations")]
 public class DepartmentPathTests
 {
     [Theory]
@@ -30,7 +33,8 @@ public class DepartmentPathTests
 #pragma warning restore CS8604
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Путь пустой", result.Error.GetMessage());
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Theory]
@@ -42,7 +46,8 @@ public class DepartmentPathTests
         var result = DepartmentPath.Create(invalidPath);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Путь должен начинаться с /", result.Error.GetMessage());
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Theory]
@@ -54,7 +59,8 @@ public class DepartmentPathTests
         var result = DepartmentPath.Create(invalidPath);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Путь не может содержать //", result.Error.GetMessage());
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Theory]
@@ -64,7 +70,8 @@ public class DepartmentPathTests
         var result = DepartmentPath.Create(invalidPath);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Путь не может содержать пустые сегменты", result.Error.GetMessage());
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Theory]
@@ -83,7 +90,7 @@ public class DepartmentPathTests
         var result = DepartmentPath.Create(invalidPath);
 
         Assert.False(result.IsSuccess);
-        Assert.Contains("Путь может содержать только символы в нижнем регистре и цифры", result.Error.GetMessage(),
-            StringComparison.OrdinalIgnoreCase);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 }

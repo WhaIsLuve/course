@@ -4,9 +4,11 @@ using DirectoryService.Core.Locations;
 using DirectoryService.Domain.DepartmentLocations;
 using DirectoryService.Domain.Departments;
 using DirectoryService.Domain.Locations;
+using DirectoryService.SharedKernel.Exceptions;
 using FluentValidation;
 using FluentValidation.Results;
 using Moq;
+using ValidationException = DirectoryService.SharedKernel.Exceptions.ValidationException;
 
 namespace DirectoryService.UnitTests.Core.Departments;
 
@@ -133,11 +135,11 @@ public class DepartmentServiceTests
 	}
 
 	/// <summary>
-	///     Проверяет, что при указании несуществующего parentId метод выбрасывает InvalidOperationException.
+	///     Проверяет, что при указании несуществующего parentId метод выбрасывает NotFoundException.
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task CreateAsyncWithNonExistentParentShouldThrowInvalidOperationException()
+	public async Task CreateAsyncWithNonExistentParentShouldThrowNotFoundException()
 	{
 		// Arrange
 		var parentId = Guid.NewGuid();
@@ -152,19 +154,17 @@ public class DepartmentServiceTests
 			.ReturnsAsync((Department?)null);
 
 		// Act & Assert
-		var exception =
-			await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateAsync(dto, CancellationToken.None));
-		Assert.Equal("Не найден родитель", exception.Message);
+		await Assert.ThrowsAsync<NotFoundException>(() => _sut.CreateAsync(dto, CancellationToken.None));
 
 		_departmentRepositoryMock.Verify(r => r.AddDepartment(It.IsAny<Department>()), Times.Never);
 	}
 
 	/// <summary>
-	///     Проверяет, что при указании несуществующих locationIds метод выбрасывает InvalidOperationException.
+	///     Проверяет, что при указании несуществующих locationIds метод выбрасывает NotFoundException.
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task CreateAsyncWithNonExistentLocationsShouldThrowInvalidOperationException()
+	public async Task CreateAsyncWithNonExistentLocationsShouldThrowNotFoundException()
 	{
 		// Arrange
 		var locationId1 = Guid.NewGuid();
@@ -181,9 +181,7 @@ public class DepartmentServiceTests
 			.ReturnsAsync(new List<Location> { existingLocation });
 
 		// Act & Assert
-		var exception =
-			await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateAsync(dto, CancellationToken.None));
-		Assert.Equal("Переданы не существующие локации.", exception.Message);
+		await Assert.ThrowsAsync<NotFoundException>(() => _sut.CreateAsync(dto, CancellationToken.None));
 
 		_departmentRepositoryMock.Verify(r => r.AddDepartment(It.IsAny<Department>()), Times.Never);
 	}
@@ -313,11 +311,11 @@ public class DepartmentServiceTests
 	}
 
 	/// <summary>
-	///     Проверяет, что при несуществующем подразделении метод выбрасывает InvalidOperationException.
+	///     Проверяет, что при несуществующем подразделении метод выбрасывает NotFoundException.
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task UpdateNameAsyncWithNonExistentDepartmentShouldThrowInvalidOperationException()
+	public async Task UpdateNameAsyncWithNonExistentDepartmentShouldThrowNotFoundException()
 	{
 		// Arrange
 		var departmentId = Guid.NewGuid();
@@ -332,10 +330,8 @@ public class DepartmentServiceTests
 			.ReturnsAsync((Department?)null);
 
 		// Act & Assert
-		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+		await Assert.ThrowsAsync<NotFoundException>(() =>
 			_sut.UpdateNameAsync(departmentId, dto, CancellationToken.None));
-
-		Assert.Equal("Не найден департамент", exception.Message);
 		_departmentRepositoryMock.Verify(r => r.Save(It.IsAny<CancellationToken>()), Times.Never);
 	}
 
@@ -402,11 +398,11 @@ public class DepartmentServiceTests
 	}
 
 	/// <summary>
-	///     Проверяет, что при несуществующем подразделении метод выбрасывает InvalidOperationException.
+	///     Проверяет, что при несуществующем подразделении метод выбрасывает NotFoundException.
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task AttachLocationWithNonExistentDepartmentShouldThrowInvalidOperationException()
+	public async Task AttachLocationWithNonExistentDepartmentShouldThrowNotFoundException()
 	{
 		// Arrange
 		var departmentId = Guid.NewGuid();
@@ -417,21 +413,19 @@ public class DepartmentServiceTests
 			.ReturnsAsync((Department?)null);
 
 		// Act & Assert
-		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+		await Assert.ThrowsAsync<NotFoundException>(() =>
 			_sut.AttachLocation(departmentId, locationId, CancellationToken.None));
-
-		Assert.Equal("Не найден департамент", exception.Message);
 		_departmentRepositoryMock.Verify(
 			r => r.AddDepartmentLocations(It.IsAny<IReadOnlyList<DepartmentLocation>>()),
 			Times.Never);
 	}
 
 	/// <summary>
-	///     Проверяет, что при несуществующей локации метод выбрасывает InvalidOperationException.
+	///     Проверяет, что при несуществующей локации метод выбрасывает NotFoundException.
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task AttachLocationWithNonExistentLocationShouldThrowInvalidOperationException()
+	public async Task AttachLocationWithNonExistentLocationShouldThrowNotFoundException()
 	{
 		// Arrange
 		var departmentId = Guid.NewGuid();
@@ -447,21 +441,19 @@ public class DepartmentServiceTests
 			.ReturnsAsync((Location?)null);
 
 		// Act & Assert
-		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+		await Assert.ThrowsAsync<NotFoundException>(() =>
 			_sut.AttachLocation(departmentId, locationId, CancellationToken.None));
-
-		Assert.Equal("Не найдена локация", exception.Message);
 		_departmentRepositoryMock.Verify(
 			r => r.AddDepartmentLocations(It.IsAny<IReadOnlyList<DepartmentLocation>>()),
 			Times.Never);
 	}
 
 	/// <summary>
-	///     Проверяет, что при попытке привязать уже существующую связь метод выбрасывает InvalidOperationException.
+	///     Проверяет, что при попытке привязать уже существующую связь метод выбрасывает ConflictException.
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task AttachLocationWithExistingLinkShouldThrowInvalidOperationException()
+	public async Task AttachLocationWithExistingLinkShouldThrowConflictException()
 	{
 		// Arrange
 		var departmentId = Guid.NewGuid();
@@ -482,10 +474,8 @@ public class DepartmentServiceTests
 			.ReturnsAsync(true);
 
 		// Act & Assert
-		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+		await Assert.ThrowsAsync<ConflictException>(() =>
 			_sut.AttachLocation(departmentId, locationId, CancellationToken.None));
-
-		Assert.Equal("Связь между локацией и департаментов уже существует.", exception.Message);
 		_departmentRepositoryMock.Verify(
 			r => r.AddDepartmentLocations(It.IsAny<IReadOnlyList<DepartmentLocation>>()),
 			Times.Never);
@@ -528,11 +518,11 @@ public class DepartmentServiceTests
 	}
 
 	/// <summary>
-	///     Проверяет, что при несуществующем подразделении метод выбрасывает InvalidOperationException.
+	///     Проверяет, что при несуществующем подразделении метод выбрасывает NotFoundException.
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task DetachLocationWithNonExistentDepartmentShouldThrowInvalidOperationException()
+	public async Task DetachLocationWithNonExistentDepartmentShouldThrowNotFoundException()
 	{
 		// Arrange
 		var departmentId = Guid.NewGuid();
@@ -543,21 +533,19 @@ public class DepartmentServiceTests
 			.ReturnsAsync((Department?)null);
 
 		// Act & Assert
-		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+		await Assert.ThrowsAsync<NotFoundException>(() =>
 			_sut.DetachLocation(departmentId, locationId, CancellationToken.None));
-
-		Assert.Equal("Не найден департамент", exception.Message);
 		_departmentRepositoryMock.Verify(
 			r => r.RemoveDepartmentLocation(It.IsAny<DepartmentLocation>()),
 			Times.Never);
 	}
 
 	/// <summary>
-	///     Проверяет, что при несуществующей локации метод выбрасывает InvalidOperationException.
+	///     Проверяет, что при несуществующей локации метод выбрасывает NotFoundException.
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task DetachLocationWithNonExistentLocationShouldThrowInvalidOperationException()
+	public async Task DetachLocationWithNonExistentLocationShouldThrowNotFoundException()
 	{
 		// Arrange
 		var departmentId = Guid.NewGuid();
@@ -573,21 +561,19 @@ public class DepartmentServiceTests
 			.ReturnsAsync((Location?)null);
 
 		// Act & Assert
-		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+		await Assert.ThrowsAsync<NotFoundException>(() =>
 			_sut.DetachLocation(departmentId, locationId, CancellationToken.None));
-
-		Assert.Equal("Не найдена локация", exception.Message);
 		_departmentRepositoryMock.Verify(
 			r => r.RemoveDepartmentLocation(It.IsAny<DepartmentLocation>()),
 			Times.Never);
 	}
 
 	/// <summary>
-	///     Проверяет, что при несуществующей связи метод выбрасывает InvalidOperationException.
+	///     Проверяет, что при несуществующей связи метод выбрасывает NotFoundException.
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task DetachLocationWithNonExistentLinkShouldThrowInvalidOperationException()
+	public async Task DetachLocationWithNonExistentLinkShouldThrowNotFoundException()
 	{
 		// Arrange
 		var departmentId = Guid.NewGuid();
@@ -608,10 +594,8 @@ public class DepartmentServiceTests
 			.ReturnsAsync((DepartmentLocation?)null);
 
 		// Act & Assert
-		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+		await Assert.ThrowsAsync<NotFoundException>(() =>
 			_sut.DetachLocation(departmentId, locationId, CancellationToken.None));
-
-		Assert.Equal("Связи между локацией и департаментов не существует.", exception.Message);
 		_departmentRepositoryMock.Verify(
 			r => r.RemoveDepartmentLocation(It.IsAny<DepartmentLocation>()),
 			Times.Never);

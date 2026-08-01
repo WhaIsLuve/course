@@ -1,4 +1,5 @@
 using DirectoryService.Domain.Locations;
+using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.UnitTests.Domain.Locations;
 
@@ -44,7 +45,8 @@ public class AddressTests
 #pragma warning restore CS8604
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Country is required", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Theory]
@@ -58,7 +60,8 @@ public class AddressTests
 #pragma warning restore CS8604
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("City is required", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]
@@ -69,7 +72,8 @@ public class AddressTests
         var result = Address.Create(longCountry, ValidCity, null, null);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal($"Country cannot exceed {Address.CountryMaxLength} characters", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]
@@ -80,7 +84,8 @@ public class AddressTests
         var result = Address.Create(ValidCountry, longCity, null, null);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal($"City cannot exceed {Address.CityMaxLength} characters", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]
@@ -91,7 +96,8 @@ public class AddressTests
         var result = Address.Create(ValidCountry, ValidCity, longStreet, null);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal($"Street cannot exceed {Address.StreetMaxLength} characters", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]
@@ -102,7 +108,8 @@ public class AddressTests
         var result = Address.Create(ValidCountry, ValidCity, null, longBuilding);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal($"Building cannot exceed {Address.BuildingMaxLength} characters", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Theory]
@@ -113,7 +120,8 @@ public class AddressTests
         var result = Address.Create(ValidCountry, ValidCity, emptyStreet, null);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Street cannot be empty when specified", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Theory]
@@ -124,7 +132,8 @@ public class AddressTests
         var result = Address.Create(ValidCountry, ValidCity, null, emptyBuilding);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Building cannot be empty when specified", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]

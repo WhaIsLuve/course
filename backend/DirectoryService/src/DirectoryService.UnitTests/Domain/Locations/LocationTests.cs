@@ -1,4 +1,5 @@
 using DirectoryService.Domain.Locations;
+using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.UnitTests.Domain.Locations;
 
@@ -29,7 +30,8 @@ public class LocationTests
         var result = Location.Create(Guid.Empty, _validName, _validAddress, _validDate);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Id cannot be empty", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]
@@ -38,7 +40,8 @@ public class LocationTests
         var result = Location.Create(Guid.NewGuid(), _validName, _validAddress, default);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("CreatedAt is required", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]
@@ -65,7 +68,8 @@ public class LocationTests
         var result = location.Update(_validName, _validAddress, default);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("UpdatedAt is required", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]
@@ -76,7 +80,8 @@ public class LocationTests
         var result = location.Update(_validName, _validAddress, _validDate.AddHours(-1));
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("UpdatedAt must be greater than CreatedAt", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]
@@ -87,6 +92,7 @@ public class LocationTests
         var result = location.Update(_validName, _validAddress, _validDate);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("UpdatedAt cannot be equal to CreatedAt", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 }

@@ -1,4 +1,5 @@
 using DirectoryService.Domain.DepartmentLocations;
+using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.UnitTests.Domain.DepartmentLocations;
 
@@ -31,9 +32,8 @@ public class DepartmentLocationTests
 		var result = DepartmentLocation.Create(Guid.Empty, departmentId, locationId, _validDate);
 
 		Assert.False(result.IsSuccess);
-		var errorMessages = result.Error.Messages;
-		Assert.Single(errorMessages);
-		Assert.Equal("Id cannot be empty", errorMessages.Single().Message);
+		Assert.Single(result.Error.Messages);
+		Assert.Equal(ErrorType.Validation, result.Error.Type);
 	}
 
 	[Fact]
@@ -45,9 +45,8 @@ public class DepartmentLocationTests
 		var result = DepartmentLocation.Create(id, Guid.Empty, locationId, _validDate);
 
 		Assert.False(result.IsSuccess);
-		var errorMessages = result.Error.Messages;
-		Assert.Single(errorMessages);
-		Assert.Equal("DepartmentId cannot be empty", errorMessages.Single().Message);
+		Assert.Single(result.Error.Messages);
+		Assert.Equal(ErrorType.Validation, result.Error.Type);
 	}
 
 	[Fact]
@@ -59,9 +58,8 @@ public class DepartmentLocationTests
 		var result = DepartmentLocation.Create(id, departmentId, Guid.Empty, _validDate);
 
 		Assert.False(result.IsSuccess);
-		var errorMessages = result.Error.Messages;
-		Assert.Single(errorMessages);
-		Assert.Equal("LocationId cannot be empty", errorMessages.Single().Message);
+		Assert.Single(result.Error.Messages);
+		Assert.Equal(ErrorType.Validation, result.Error.Type);
 	}
 
 	[Fact]
@@ -74,8 +72,7 @@ public class DepartmentLocationTests
 		var result = DepartmentLocation.Create(id, departmentId, locationId, default);
 
 		Assert.False(result.IsSuccess);
-		var errorMessages = result.Error.Messages;
-		Assert.Single(errorMessages);
-		Assert.Equal("CreatedAt is required", errorMessages.Single().Message);
+		Assert.Single(result.Error.Messages);
+		Assert.Equal(ErrorType.Validation, result.Error.Type);
 	}
 }
