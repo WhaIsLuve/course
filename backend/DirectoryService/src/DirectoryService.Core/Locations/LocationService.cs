@@ -38,12 +38,12 @@ public sealed class LocationService(
 				"Локация с таким наименование уже существует"));
 		var id = Guid.CreateVersion7();
 		var locationName = LocationName.Create(dto.Name);
+		if (locationName.IsFailure) throw new ValidationException(locationName.Error);
 		var address = Address.Create(dto.Address.Country,
 			dto.Address.City,
 			dto.Address.Street,
 			dto.Address.Building);
 		if (address.IsFailure) throw new ValidationException(address.Error);
-		if (locationName.IsFailure) throw new ValidationException(locationName.Error);
 
 		var location = Location.Create(id, locationName.Value, address.Value, _timeProvider.GetUtcNow()
 			.UtcDateTime);
@@ -64,12 +64,12 @@ public sealed class LocationService(
 		var location = await _locationRepository.GetByIdAsync(id, cancellationToken) ??
 		               throw new NotFoundException(Error.NotFound("location.not.found", "Локация не найдена"));
 		var locationName = LocationName.Create(dto.Name);
+		if (locationName.IsFailure) throw new ValidationException(locationName.Error);
 		var address = Address.Create(dto.Address.Country,
 			dto.Address.City,
 			dto.Address.Street,
 			dto.Address.Building);
 		if (address.IsFailure) throw new ValidationException(address.Error);
-		if (locationName.IsFailure) throw new ValidationException(locationName.Error);
 		if (!string.Equals(location.Name.Value, dto.Name, StringComparison.OrdinalIgnoreCase))
 		{
 			var existWithSameName = await _locationRepository.ExistWithSameNameAsync(dto.Name, cancellationToken);
