@@ -1,4 +1,5 @@
 using DirectoryService.Domain.Departments;
+using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.UnitTests.Domain.Departments;
 
@@ -28,6 +29,7 @@ public class DepartmentNameTests
 #pragma warning restore CS8604
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("value is required", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 }

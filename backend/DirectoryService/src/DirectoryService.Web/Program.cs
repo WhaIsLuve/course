@@ -1,5 +1,6 @@
 using DirectoryService.Core;
 using DirectoryService.Infrastructure.Postgres;
+using DirectoryService.Web.Middlewares;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
@@ -15,6 +16,8 @@ builder.Services.AddDbContext<AppDbContext>(opt => opt.UseNpgsql(builder.Configu
 	.UseLoggerFactory(LoggerFactory.Create(c => c.AddConsole())));
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.MapControllers();
 

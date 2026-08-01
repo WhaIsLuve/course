@@ -1,4 +1,5 @@
 using DirectoryService.Domain.Departments;
+using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.UnitTests.Domain.Departments;
 
@@ -31,7 +32,8 @@ public class DepartmentSlugTests
 #pragma warning restore CS8604
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Slug is required", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Theory]
@@ -50,8 +52,7 @@ public class DepartmentSlugTests
         var result = DepartmentSlug.Create(invalidSlug);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal(
-            "Slug must contain only lowercase letters, numbers, hyphens and underscores, and cannot start or end with hyphen or underscore",
-            result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 }

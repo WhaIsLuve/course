@@ -1,8 +1,12 @@
 ﻿using DirectoryService.Contracts.Departments;
+using DirectoryService.Core.Extensions;
 using DirectoryService.Core.Locations;
 using DirectoryService.Domain.DepartmentLocations;
 using DirectoryService.Domain.Departments;
+using DirectoryService.SharedKernel.Errors;
+using DirectoryService.SharedKernel.Exceptions;
 using FluentValidation;
+using ValidationException = DirectoryService.SharedKernel.Exceptions.ValidationException;
 
 namespace DirectoryService.Core.Departments;
 
@@ -17,32 +21,28 @@ public sealed class DepartmentService(
 	private readonly IValidator<CreateDepartmentDto> _createDepartmentValidator =
 		createDepartmentValidator ?? throw new ArgumentNullException(nameof(createDepartmentValidator));
 
-	private readonly IValidator<UpdateDepartmentNameDto> _updateDepartmentNameValidator =
-		updateDepartmentNameValidator ?? throw new ArgumentNullException(nameof(updateDepartmentNameValidator));
-
 	private readonly IDepartmentRepository _departmentRepository =
 		repository ?? throw new ArgumentNullException(nameof(repository));
 
-	private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
-
 	private readonly ILocationRepository _locationRepository =
 		locationRepository ?? throw new ArgumentNullException(nameof(locationRepository));
+
+	private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+
+	private readonly IValidator<UpdateDepartmentNameDto> _updateDepartmentNameValidator =
+		updateDepartmentNameValidator ?? throw new ArgumentNullException(nameof(updateDepartmentNameValidator));
 
 	public async Task<Guid> CreateAsync(CreateDepartmentDto dto, CancellationToken cancellationToken = default)
 	{
 		var validationResult = await _createDepartmentValidator.ValidateAsync(dto, cancellationToken);
 		if (!validationResult.IsValid)
-		{
-			throw new ValidationException(validationResult.Errors);
-		}
+			throw new ValidationException(Error.Validation(validationResult.ToErrorMessages()));
 
 		Department? parent = null;
 
 		if (dto.ParentId != null)
-		{
 			parent = await _departmentRepository.GetByIdAsync(dto.ParentId.Value, cancellationToken) ??
-			         throw new InvalidOperationException("Не найден родитель");
-		}
+			         throw new NotFoundException(Error.NotFound("department.not.found", "Не найден родитель"));
 
 		var id = Guid.CreateVersion7();
 		var name = DepartmentName.Create(dto.Name);
@@ -55,7 +55,7 @@ public sealed class DepartmentService(
 
 		var department =
 			Department.Create(id, name.Value, slug.Value, parentInfo, dateTimeNow);
-		if (department.IsFailure) throw new InvalidOperationException(department.Error);
+		if (department.IsFailure) throw new FailureException(department.Error);
 
 		await AddNewLocationInDepartment(dto.LocationIds, department.Value, dateTimeNow, cancellationToken);
 
@@ -72,39 +72,33 @@ public sealed class DepartmentService(
 	{
 		var validationResult = await _updateDepartmentNameValidator.ValidateAsync(dto, cancellationToken);
 		if (!validationResult.IsValid)
-		{
-			throw new ValidationException(validationResult.Errors);
-		}
+			throw new ValidationException(Error.Validation(validationResult.ToErrorMessages()));
 
 		var department = await _departmentRepository.GetByIdAsync(id, cancellationToken) ??
-		                 throw new InvalidOperationException("Не найден департамент");
+		                 throw new NotFoundException(Error.NotFound("department.not.found", "Не найден департамент"));
 		var newName = DepartmentName.Create(dto.Name);
 		if (newName.IsFailure) throw new ValidationException(newName.Error);
 		var result = department.UpdateName(newName.Value, _timeProvider.GetUtcNow()
 			.UtcDateTime);
-		if (result.IsFailure) throw new InvalidOperationException(result.Error);
+		if (result.IsFailure) throw new FailureException(result.Error);
 		await _departmentRepository.Save(cancellationToken);
 	}
 
 	public async Task AttachLocation(Guid departmentId, Guid locationId, CancellationToken cancellationToken = default)
 	{
 		var department = await _departmentRepository.GetByIdAsync(departmentId, cancellationToken) ??
-		                 throw new InvalidOperationException("Не найден департамент");
+		                 throw new NotFoundException(Error.NotFound("department.not.found", "Не найден департамент"));
 		var location = await _locationRepository.GetByIdAsync(locationId, cancellationToken) ??
-		               throw new InvalidOperationException("Не найдена локация");
+		               throw new NotFoundException(Error.NotFound("location.not.found", "Не найдена локация"));
 		var existDepartmentLocation =
 			await _departmentRepository.ExistDepartmentLocation(department.Id, location.Id, cancellationToken);
 		if (existDepartmentLocation)
-		{
-			throw new InvalidOperationException("Связь между локацией и департаментов уже существует.");
-		}
+			throw new ConflictException(Error.Conflict("department.location.exist",
+				"Связь между локацией и департаментов уже существует."));
 
 		var departmentLocation = DepartmentLocation.Create(Guid.CreateVersion7(), department.Id, location.Id,
 			_timeProvider.GetUtcNow().UtcDateTime);
-		if (departmentLocation.IsFailure)
-		{
-			throw new InvalidOperationException(departmentLocation.Error);
-		}
+		if (departmentLocation.IsFailure) throw new FailureException(departmentLocation.Error);
 
 		_departmentRepository.AddDepartmentLocations([departmentLocation.Value]);
 		await _departmentRepository.Save(cancellationToken);
@@ -113,12 +107,13 @@ public sealed class DepartmentService(
 	public async Task DetachLocation(Guid departmentId, Guid locationId, CancellationToken cancellationToken = default)
 	{
 		var department = await _departmentRepository.GetByIdAsync(departmentId, cancellationToken) ??
-		                 throw new InvalidOperationException("Не найден департамент");
+		                 throw new NotFoundException(Error.NotFound("department.not.found", "Не найден департамент"));
 		var location = await _locationRepository.GetByIdAsync(locationId, cancellationToken) ??
-		               throw new InvalidOperationException("Не найдена локация");
+		               throw new NotFoundException(Error.NotFound("location.not.found", "Не найдена локация"));
 		var departmentLocation =
 			await _departmentRepository.GetDepartmentLocation(department.Id, location.Id, cancellationToken) ??
-			throw new InvalidOperationException("Связи между локацией и департаментов не существует.");
+			throw new NotFoundException(Error.NotFound("department.location.not.found",
+				"Связи между локацией и департаментов не существует."));
 		_departmentRepository.RemoveDepartmentLocation(departmentLocation);
 		await _departmentRepository.Save(cancellationToken);
 	}
@@ -128,18 +123,14 @@ public sealed class DepartmentService(
 		DateTime dateTimeNow,
 		CancellationToken cancellationToken)
 	{
-		if (dtoLocationIds.Count == 0)
-		{
-			return;
-		}
+		if (dtoLocationIds.Count == 0) return;
 
 		var locations = await _locationRepository.GetByIdsAsync(dtoLocationIds, cancellationToken);
 		var missedLocations = dtoLocationIds.Except(locations.Select(l => l.Id))
 			.ToList();
 		if (missedLocations.Count != 0)
-		{
-			throw new InvalidOperationException("Переданы не существующие локации.");
-		}
+			throw new NotFoundException(Error.NotFound("department.location.missing",
+				"Переданы не существующие локации."));
 
 		var departmentLocation = locations.Select(x =>
 				DepartmentLocation.Create(Guid.CreateVersion7(), department.Id, x.Id,

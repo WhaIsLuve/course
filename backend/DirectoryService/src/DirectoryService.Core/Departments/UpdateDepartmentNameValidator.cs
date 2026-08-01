@@ -9,6 +9,7 @@ public class UpdateDepartmentNameValidator : AbstractValidator<UpdateDepartmentN
     {
         RuleFor(x => x.Name)
             .NotEmpty()
-            .WithMessage("Наименование не может быть пустым");
+            .WithMessage("Наименование не может быть пустым")
+            .WithErrorCode("department.name.invalid");
     }
 }

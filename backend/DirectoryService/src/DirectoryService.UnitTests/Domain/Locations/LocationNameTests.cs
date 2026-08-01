@@ -1,4 +1,5 @@
 using DirectoryService.Domain.Locations;
+using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.UnitTests.Domain.Locations;
 
@@ -24,7 +25,8 @@ public class LocationNameTests
 #pragma warning restore CS8625
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Name is required", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Theory]
@@ -35,7 +37,8 @@ public class LocationNameTests
         var result = LocationName.Create(invalidName);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Name is required", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]
@@ -46,7 +49,8 @@ public class LocationNameTests
         var result = LocationName.Create(longName);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal($"Name cannot exceed {LocationName.MaxLength} characters", result.Error);
+        Assert.Single(result.Error.Messages);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]

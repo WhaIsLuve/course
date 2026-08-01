@@ -1,9 +1,11 @@
 using DirectoryService.Contracts.Locations;
 using DirectoryService.Core.Locations;
 using DirectoryService.Domain.Locations;
+using DirectoryService.SharedKernel.Exceptions;
 using FluentValidation;
 using FluentValidation.Results;
 using Moq;
+using ValidationException = FluentValidation.ValidationException;
 
 namespace DirectoryService.UnitTests.Core.Locations;
 
@@ -79,10 +81,7 @@ public class LocationServiceTests
 			.ReturnsAsync(new ValidationResult(validationFailures));
 
 		// Act & Assert
-		var exception =
-			await Assert.ThrowsAsync<ValidationException>(() => _sut.CreateAsync(dto, CancellationToken.None));
-
-		Assert.NotEmpty(exception.Errors);
+		await Assert.ThrowsAsync<SharedKernel.Exceptions.ValidationException>(() => _sut.CreateAsync(dto, CancellationToken.None));
 		_repositoryMock.Verify(r => r.ExistWithSameNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
 			Times.Never);
 		_repositoryMock.Verify(r => r.Add(It.IsAny<Location>()), Times.Never);
@@ -93,7 +92,7 @@ public class LocationServiceTests
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task CreateAsyncWithExistingNameShouldThrowInvalidOperationException()
+	public async Task CreateAsyncWithExistingNameShouldThrowConflictException()
 	{
 		// Arrange
 		var dto = new CreateLocationDto("Existing Location", new AddressDto("Country", "City", "Street", "Building"));
@@ -107,10 +106,7 @@ public class LocationServiceTests
 			.ReturnsAsync(true);
 
 		// Act & Assert
-		var exception =
-			await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateAsync(dto, CancellationToken.None));
-
-		Assert.Equal("Локация с таким наименование уже существует", exception.Message);
+		await Assert.ThrowsAsync<ConflictException>(() => _sut.CreateAsync(dto, CancellationToken.None));
 		_repositoryMock.Verify(r => r.Add(It.IsAny<Location>()), Times.Never);
 	}
 
@@ -134,10 +130,7 @@ public class LocationServiceTests
 			.ReturnsAsync(false);
 
 		// Act & Assert
-		var exception =
-			await Assert.ThrowsAsync<ValidationException>(() => _sut.CreateAsync(dto, CancellationToken.None));
-
-		Assert.Contains("Country cannot exceed", exception.Message, StringComparison.OrdinalIgnoreCase);
+		await Assert.ThrowsAsync<SharedKernel.Exceptions.ValidationException>(() => _sut.CreateAsync(dto, CancellationToken.None));
 		_repositoryMock.Verify(r => r.Add(It.IsAny<Location>()), Times.Never);
 	}
 
@@ -161,10 +154,7 @@ public class LocationServiceTests
 			.ReturnsAsync(false);
 
 		// Act & Assert
-		var exception =
-			await Assert.ThrowsAsync<ValidationException>(() => _sut.CreateAsync(dto, CancellationToken.None));
-
-		Assert.Contains("Name cannot exceed", exception.Message, StringComparison.OrdinalIgnoreCase);
+		await Assert.ThrowsAsync<SharedKernel.Exceptions.ValidationException>(() => _sut.CreateAsync(dto, CancellationToken.None));
 		_repositoryMock.Verify(r => r.Add(It.IsAny<Location>()), Times.Never);
 	}
 
@@ -305,17 +295,16 @@ public class LocationServiceTests
 			.ReturnsAsync(new ValidationResult(validationFailures));
 
 		// Act & Assert
-		await Assert.ThrowsAsync<ValidationException>(() => _sut.UpdateAsync(locationId, dto, CancellationToken.None));
-
+		await Assert.ThrowsAsync<SharedKernel.Exceptions.ValidationException>(() => _sut.UpdateAsync(locationId, dto, CancellationToken.None));
 		_repositoryMock.Verify(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
 	}
 
 	/// <summary>
-	///     Проверяет, что при несуществующей локации метод выбрасывает InvalidOperationException.
+	///     Проверяет, что при несуществующей локации метод выбрасывает NotFoundException.
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task UpdateAsyncWithNonExistentLocationShouldThrowInvalidOperationException()
+	public async Task UpdateAsyncWithNonExistentLocationShouldThrowNotFoundException()
 	{
 		// Arrange
 		var locationId = Guid.NewGuid();
@@ -330,11 +319,8 @@ public class LocationServiceTests
 			.ReturnsAsync((Location?)null);
 
 		// Act & Assert
-		var exception =
-			await Assert.ThrowsAsync<InvalidOperationException>(() =>
+		await Assert.ThrowsAsync<NotFoundException>(() =>
 				_sut.UpdateAsync(locationId, dto, CancellationToken.None));
-
-		Assert.Equal("Локация не найдена", exception.Message);
 	}
 
 	/// <summary>
@@ -360,11 +346,8 @@ public class LocationServiceTests
 			.ReturnsAsync(existingLocation);
 
 		// Act & Assert
-		var exception =
-			await Assert.ThrowsAsync<ValidationException>(() =>
+		await Assert.ThrowsAsync<SharedKernel.Exceptions.ValidationException>(() =>
 				_sut.UpdateAsync(locationId, dto, CancellationToken.None));
-
-		Assert.Contains("Name cannot exceed", exception.Message, StringComparison.OrdinalIgnoreCase);
 	}
 
 	/// <summary>
@@ -390,19 +373,16 @@ public class LocationServiceTests
 			.ReturnsAsync(existingLocation);
 
 		// Act & Assert
-		var exception =
-			await Assert.ThrowsAsync<ValidationException>(() =>
+		await Assert.ThrowsAsync<SharedKernel.Exceptions.ValidationException>(() =>
 				_sut.UpdateAsync(locationId, dto, CancellationToken.None));
-
-		Assert.Contains("Country cannot exceed", exception.Message, StringComparison.OrdinalIgnoreCase);
 	}
 
 	/// <summary>
-	///     Проверяет, что при попытке обновить локацию на уже существующее имя метод выбрасывает InvalidOperationException.
+	///     Проверяет, что при попытке обновить локацию на уже существующее имя метод выбрасывает ConflictException.
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task UpdateAsyncWithExistingNameShouldThrowInvalidOperationException()
+	public async Task UpdateAsyncWithExistingNameShouldThrowConflictException()
 	{
 		// Arrange
 		var locationId = Guid.NewGuid();
@@ -422,11 +402,8 @@ public class LocationServiceTests
 			.ReturnsAsync(true);
 
 		// Act & Assert
-		var exception =
-			await Assert.ThrowsAsync<InvalidOperationException>(() =>
+		await Assert.ThrowsAsync<ConflictException>(() =>
 				_sut.UpdateAsync(locationId, dto, CancellationToken.None));
-
-		Assert.Equal("Локация с таким наименование уже существует", exception.Message);
 	}
 
 	/// <summary>

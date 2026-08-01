@@ -1,4 +1,5 @@
 ﻿using CSharpFunctionalExtensions;
+using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.Domain.Departments;
 
@@ -11,9 +12,9 @@ public record DepartmentName
 
     public string Value { get; }
 
-    public static Result<DepartmentName, string> Create(string value)
+    public static Result<DepartmentName, Error> Create(string value)
     {
-        return Result.SuccessIf<DepartmentName, string>(!string.IsNullOrWhiteSpace(value), new DepartmentName(value),
-            "value is required");
+        return Result.SuccessIf(!string.IsNullOrWhiteSpace(value), new DepartmentName(value),
+            Error.Validation("department.name.invalid", "Наименование указано некоректно"));
     }
 }
