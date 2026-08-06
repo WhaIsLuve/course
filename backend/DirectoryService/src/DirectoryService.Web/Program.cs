@@ -1,5 +1,7 @@
 using DirectoryService.Core;
 using DirectoryService.Infrastructure.Postgres;
+using DirectoryService.SharedKernel.Envelopes;
+using DirectoryService.Web.EndpointResults;
 using DirectoryService.Web.Middlewares;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;

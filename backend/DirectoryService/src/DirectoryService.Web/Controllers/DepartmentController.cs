@@ -1,5 +1,7 @@
 ﻿using DirectoryService.Contracts.Departments;
 using DirectoryService.Core.Departments;
+using DirectoryService.SharedKernel.Envelopes;
+using DirectoryService.Web.EndpointResults;
 using DirectoryService.Web.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,16 +17,20 @@ public sealed class DepartmentController(IDepartmentService departmentService) :
 		departmentService ?? throw new ArgumentNullException(nameof(departmentService));
 
 	[HttpPost]
+	[ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Envelope))]
+	[ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(Envelope))]
+	[ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(Envelope))]
+	[ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(Envelope))]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(Envelope))]
 	public async Task<IResult> Create([FromBody] CreateDepartmentDto dto, CancellationToken cancellationToken)
 	{
 		var result = await _departmentService.CreateAsync(dto, cancellationToken);
 		if (result.IsFailure)
 		{
-			return result.Error.ToResponse();
+			return new ErrorResult(result.Error);
 		}
 
-		HttpContext.Response.Headers.Append("Location", result.Value.ToString());
-		return TypedResults.Created();
+		return new CreatedResult<Guid>(result.Value);
 	}
 
 	[HttpGet]
@@ -40,15 +46,15 @@ public sealed class DepartmentController(IDepartmentService departmentService) :
 	}
 
 	[HttpPatch("{id:guid}")]
-	public async Task<IResult> UpdateName([FromRoute] Guid id, [FromBody] UpdateDepartmentNameDto dto,
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Envelope))]
+	[ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(Envelope))]
+	[ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(Envelope))]
+	[ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(Envelope))]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(Envelope))]
+	public async Task<EndpointResult> UpdateName([FromRoute] Guid id, [FromBody] UpdateDepartmentNameDto dto,
 		CancellationToken cancellationToken)
 	{
-		var result = await _departmentService.UpdateNameAsync(id, dto, cancellationToken);
-		if (result.IsFailure)
-		{
-			return result.Error.ToResponse();
-		}
-		return TypedResults.Ok();
+		return await _departmentService.UpdateNameAsync(id, dto, cancellationToken);
 	}
 
 	[HttpDelete("{id:guid}")]
@@ -58,27 +64,27 @@ public sealed class DepartmentController(IDepartmentService departmentService) :
 	}
 
 	[HttpPost("{departmentId:guid}/location/{locationId:guid}")]
-	public async Task<IResult> AttachLocation([FromRoute] Guid departmentId, [FromRoute] Guid locationId,
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Envelope))]
+	[ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(Envelope))]
+	[ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(Envelope))]
+	[ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(Envelope))]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(Envelope))]
+	public async Task<EndpointResult> AttachLocation([FromRoute] Guid departmentId, [FromRoute] Guid locationId,
 		CancellationToken cancellationToken)
 	{
-		var result = await _departmentService.AttachLocation(departmentId, locationId, cancellationToken);
-		if (result.IsFailure)
-		{
-			return result.Error.ToResponse();
-		}
-		return TypedResults.Ok();
+		return await _departmentService.AttachLocation(departmentId, locationId, cancellationToken);
 	}
 
 	[HttpDelete("{departmentId:guid}/location/{locationId:guid}")]
-	public async Task<IResult> DetachLocation([FromRoute] Guid departmentId, [FromRoute] Guid locationId,
+	[ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Envelope))]
+	[ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(Envelope))]
+	[ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(Envelope))]
+	[ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(Envelope))]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(Envelope))]
+	public async Task<EndpointResult> DetachLocation([FromRoute] Guid departmentId, [FromRoute] Guid locationId,
 		CancellationToken cancellationToken)
 	{
-		var result = await _departmentService.DetachLocation(departmentId, locationId, cancellationToken);
-		if (result.IsFailure)
-		{
-			return result.Error.ToResponse();
-		}
-		return TypedResults.Ok();
+		return await _departmentService.DetachLocation(departmentId, locationId, cancellationToken);
 	}
 
 	[HttpPut("{id:guid}/position")]

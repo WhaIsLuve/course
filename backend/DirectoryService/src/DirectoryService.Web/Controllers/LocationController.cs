@@ -1,6 +1,7 @@
 ﻿using DirectoryService.Contracts.Locations;
 using DirectoryService.Core.Locations;
-using DirectoryService.Web.Extensions;
+using DirectoryService.SharedKernel.Envelopes;
+using DirectoryService.Web.EndpointResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DirectoryService.Web.Controllers;
@@ -15,15 +16,19 @@ public sealed class LocationController(ILocationService locationService) : Contr
         locationService ?? throw new ArgumentNullException(nameof(locationService));
 
     [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(Envelope))]
     public async Task<IResult> Create([FromBody] CreateLocationDto dto, CancellationToken cancellationToken)
     {
         var result = await _locationService.CreateAsync(dto, cancellationToken);
         if (result.IsFailure)
         {
-            return result.Error.ToResponse();
+            return new ErrorResult(result.Error);
         }
-        HttpContext.Response.Headers.Append("Location", result.Value.ToString());
-        return TypedResults.Created();
+        return new CreatedResult<Guid>(result.Value);
     }
 
     [HttpGet]
@@ -39,16 +44,16 @@ public sealed class LocationController(ILocationService locationService) : Contr
     }
 
     [HttpPatch("{id:guid}")]
-    public async Task<IResult> Update([FromRoute] Guid id,
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(Envelope))]
+    public async Task<EndpointResult> Update([FromRoute] Guid id,
         [FromBody] UpdateLocationDto dto,
         CancellationToken cancellationToken)
     {
-        var result = await _locationService.UpdateAsync(id, dto, cancellationToken);
-        if (result.IsFailure)
-        {
-            return result.Error.ToResponse();
-        }
-        return TypedResults.Ok();
+        return await _locationService.UpdateAsync(id, dto, cancellationToken);
     }
 
     [HttpDelete("{id:guid}")]

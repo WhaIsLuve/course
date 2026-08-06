@@ -1,7 +1,9 @@
 ﻿
 
+using DirectoryService.SharedKernel.Envelopes;
 using DirectoryService.SharedKernel.Errors;
 using DirectoryService.SharedKernel.Exceptions;
+using DirectoryService.Web.EndpointResults;
 
 namespace DirectoryService.Web.Middlewares;
 
@@ -42,9 +44,10 @@ internal sealed class ExceptionMiddleware(RequestDelegate next, ILogger<Exceptio
 
 			_ => (StatusCodes.Status500InternalServerError, Error.Failure("server.internal", exception.Message)),
 		};
+		var envelope = Envelope.Fail(error);
 		context.Response.ContentType = "application/json";
 		context.Response.StatusCode = statusCode;
 
-		await context.Response.WriteAsJsonAsync(error);
+		await context.Response.WriteAsJsonAsync(envelope);
 	}
 }
