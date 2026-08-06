@@ -1,6 +1,7 @@
 using DirectoryService.Contracts.Locations;
 using DirectoryService.Core.Locations;
 using DirectoryService.Domain.Locations;
+using DirectoryService.SharedKernel.Errors;
 using DirectoryService.SharedKernel.Exceptions;
 using FluentValidation;
 using FluentValidation.Results;
@@ -67,7 +68,7 @@ public class LocationServiceTests
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task CreateAsyncWithInvalidDtoShouldThrowValidationException()
+	public async Task CreateAsyncWithInvalidDtoShouldThrowValidationError()
 	{
 		// Arrange
 		var dto = new CreateLocationDto("", new AddressDto("", "", "", ""));
@@ -80,8 +81,12 @@ public class LocationServiceTests
 			.Setup(v => v.ValidateAsync(It.IsAny<CreateLocationDto>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(new ValidationResult(validationFailures));
 
-		// Act & Assert
-		await Assert.ThrowsAsync<SharedKernel.Exceptions.ValidationException>(() => _sut.CreateAsync(dto, CancellationToken.None));
+		// Act
+		var result = await _sut.CreateAsync(dto, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsFailure);
+		Assert.Equal(ErrorType.Validation, result.Error.Type);
 		_repositoryMock.Verify(r => r.ExistWithSameNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
 			Times.Never);
 		_repositoryMock.Verify(r => r.Add(It.IsAny<Location>()), Times.Never);
@@ -92,7 +97,7 @@ public class LocationServiceTests
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task CreateAsyncWithExistingNameShouldThrowConflictException()
+	public async Task CreateAsyncWithExistingNameShouldThrowConflictError()
 	{
 		// Arrange
 		var dto = new CreateLocationDto("Existing Location", new AddressDto("Country", "City", "Street", "Building"));
@@ -105,8 +110,12 @@ public class LocationServiceTests
 			.Setup(r => r.ExistWithSameNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(true);
 
-		// Act & Assert
-		await Assert.ThrowsAsync<ConflictException>(() => _sut.CreateAsync(dto, CancellationToken.None));
+		// Act
+		var result = await _sut.CreateAsync(dto, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsFailure);
+		Assert.Equal(ErrorType.Conflict, result.Error.Type);
 		_repositoryMock.Verify(r => r.Add(It.IsAny<Location>()), Times.Never);
 	}
 
@@ -115,7 +124,7 @@ public class LocationServiceTests
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task CreateAsyncWithInvalidAddressShouldThrowValidationException()
+	public async Task CreateAsyncWithInvalidAddressShouldThrowValidationError()
 	{
 		// Arrange
 		var invalidCountry = new string('a', Address.CountryMaxLength + 1);
@@ -129,8 +138,12 @@ public class LocationServiceTests
 			.Setup(r => r.ExistWithSameNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(false);
 
-		// Act & Assert
-		await Assert.ThrowsAsync<SharedKernel.Exceptions.ValidationException>(() => _sut.CreateAsync(dto, CancellationToken.None));
+		// Act
+		var result = await _sut.CreateAsync(dto, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsFailure);
+		Assert.Equal(ErrorType.Validation, result.Error.Type);
 		_repositoryMock.Verify(r => r.Add(It.IsAny<Location>()), Times.Never);
 	}
 
@@ -139,7 +152,7 @@ public class LocationServiceTests
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task CreateAsyncWithInvalidLocationNameShouldThrowValidationException()
+	public async Task CreateAsyncWithInvalidLocationNameShouldThrowValidationError()
 	{
 		// Arrange
 		var invalidName = new string('a', LocationName.MaxLength + 1);
@@ -153,8 +166,12 @@ public class LocationServiceTests
 			.Setup(r => r.ExistWithSameNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(false);
 
-		// Act & Assert
-		await Assert.ThrowsAsync<SharedKernel.Exceptions.ValidationException>(() => _sut.CreateAsync(dto, CancellationToken.None));
+		// Act
+		var result = await _sut.CreateAsync(dto, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsFailure);
+		Assert.Equal(ErrorType.Validation, result.Error.Type);
 		_repositoryMock.Verify(r => r.Add(It.IsAny<Location>()), Times.Never);
 	}
 
@@ -280,7 +297,7 @@ public class LocationServiceTests
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task UpdateAsyncWithInvalidDtoShouldThrowValidationException()
+	public async Task UpdateAsyncWithInvalidDtoShouldThrowValidationError()
 	{
 		// Arrange
 		var locationId = Guid.NewGuid();
@@ -294,21 +311,26 @@ public class LocationServiceTests
 			.Setup(v => v.ValidateAsync(It.IsAny<UpdateLocationDto>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(new ValidationResult(validationFailures));
 
-		// Act & Assert
-		await Assert.ThrowsAsync<SharedKernel.Exceptions.ValidationException>(() => _sut.UpdateAsync(locationId, dto, CancellationToken.None));
+		// Act
+		var result = await _sut.UpdateAsync(locationId, dto, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsFailure);
+		Assert.Equal(ErrorType.Validation, result.Error.Type);
 		_repositoryMock.Verify(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
 	}
 
 	/// <summary>
-	///     Проверяет, что при несуществующей локации метод выбрасывает NotFoundException.
+	///     Проверяет, что при несуществующей локации метод выбрасывает NotFoundError.
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task UpdateAsyncWithNonExistentLocationShouldThrowNotFoundException()
+	public async Task UpdateAsyncWithNonExistentLocationShouldThrowNotFoundError()
 	{
 		// Arrange
 		var locationId = Guid.NewGuid();
 		var dto = new UpdateLocationDto("New Name", new AddressDto("Country", "City", "Street", "Building"));
+		var expectedError = Error.NotFound("not found", "not found");
 
 		_updateValidatorMock
 			.Setup(v => v.ValidateAsync(It.IsAny<UpdateLocationDto>(), It.IsAny<CancellationToken>()))
@@ -316,19 +338,22 @@ public class LocationServiceTests
 
 		_repositoryMock
 			.Setup(r => r.GetByIdAsync(locationId, It.IsAny<CancellationToken>()))
-			.ReturnsAsync((Location?)null);
+			.ReturnsAsync(expectedError);
 
-		// Act & Assert
-		await Assert.ThrowsAsync<NotFoundException>(() =>
-				_sut.UpdateAsync(locationId, dto, CancellationToken.None));
+		// Act
+		var result = await _sut.UpdateAsync(locationId, dto, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsFailure);
+		Assert.Equal(expectedError.Type, result.Error.Type);
 	}
 
 	/// <summary>
-	///     Проверяет, что при невалидном имени на уровне домена метод выбрасывает ValidationException.
+	///     Проверяет, что при невалидном имени на уровне домена метод выбрасывает ValidationError.
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task UpdateAsyncWithInvalidDomainNameShouldThrowValidationException()
+	public async Task UpdateAsyncWithInvalidDomainNameShouldThrowValidationError()
 	{
 		// Arrange
 		var locationId = Guid.NewGuid();
@@ -345,17 +370,20 @@ public class LocationServiceTests
 			.Setup(r => r.GetByIdAsync(locationId, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(existingLocation);
 
-		// Act & Assert
-		await Assert.ThrowsAsync<SharedKernel.Exceptions.ValidationException>(() =>
-				_sut.UpdateAsync(locationId, dto, CancellationToken.None));
+		// Act
+		var result = await _sut.UpdateAsync(locationId, dto, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsFailure);
+		Assert.Equal(ErrorType.Validation, result.Error.Type);
 	}
 
 	/// <summary>
-	///     Проверяет, что при невалидном адресе на уровне домена метод выбрасывает ValidationException.
+	///     Проверяет, что при невалидном адресе на уровне домена метод выбрасывает ValidationError.
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task UpdateAsyncWithInvalidDomainAddressShouldThrowValidationException()
+	public async Task UpdateAsyncWithInvalidDomainAddressShouldThrowValidationError()
 	{
 		// Arrange
 		var locationId = Guid.NewGuid();
@@ -372,17 +400,20 @@ public class LocationServiceTests
 			.Setup(r => r.GetByIdAsync(locationId, It.IsAny<CancellationToken>()))
 			.ReturnsAsync(existingLocation);
 
-		// Act & Assert
-		await Assert.ThrowsAsync<SharedKernel.Exceptions.ValidationException>(() =>
-				_sut.UpdateAsync(locationId, dto, CancellationToken.None));
+		// Act
+		var result = await _sut.UpdateAsync(locationId, dto, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsFailure);
+		Assert.Equal(ErrorType.Validation, result.Error.Type);
 	}
 
 	/// <summary>
-	///     Проверяет, что при попытке обновить локацию на уже существующее имя метод выбрасывает ConflictException.
+	///     Проверяет, что при попытке обновить локацию на уже существующее имя метод выбрасывает ConflictError.
 	/// </summary>
 	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task UpdateAsyncWithExistingNameShouldThrowConflictException()
+	public async Task UpdateAsyncWithExistingNameShouldThrowConflictError()
 	{
 		// Arrange
 		var locationId = Guid.NewGuid();
@@ -401,9 +432,12 @@ public class LocationServiceTests
 			.Setup(r => r.ExistWithSameNameAsync("Existing Name", It.IsAny<CancellationToken>()))
 			.ReturnsAsync(true);
 
-		// Act & Assert
-		await Assert.ThrowsAsync<ConflictException>(() =>
-				_sut.UpdateAsync(locationId, dto, CancellationToken.None));
+		// Act
+		var result = await _sut.UpdateAsync(locationId, dto, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsFailure);
+		Assert.Equal(ErrorType.Conflict, result.Error.Type);
 	}
 
 	/// <summary>

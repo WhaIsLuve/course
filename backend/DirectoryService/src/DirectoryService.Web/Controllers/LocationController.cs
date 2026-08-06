@@ -1,5 +1,6 @@
 ﻿using DirectoryService.Contracts.Locations;
 using DirectoryService.Core.Locations;
+using DirectoryService.Web.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DirectoryService.Web.Controllers;
@@ -16,8 +17,12 @@ public sealed class LocationController(ILocationService locationService) : Contr
     [HttpPost]
     public async Task<IResult> Create([FromBody] CreateLocationDto dto, CancellationToken cancellationToken)
     {
-        var locationId = await _locationService.CreateAsync(dto, cancellationToken);
-        HttpContext.Response.Headers.Append("Location", locationId.ToString());
+        var result = await _locationService.CreateAsync(dto, cancellationToken);
+        if (result.IsFailure)
+        {
+            return result.Error.ToResponse();
+        }
+        HttpContext.Response.Headers.Append("Location", result.Value.ToString());
         return TypedResults.Created();
     }
 
@@ -38,7 +43,11 @@ public sealed class LocationController(ILocationService locationService) : Contr
         [FromBody] UpdateLocationDto dto,
         CancellationToken cancellationToken)
     {
-        await _locationService.UpdateAsync(id, dto, cancellationToken);
+        var result = await _locationService.UpdateAsync(id, dto, cancellationToken);
+        if (result.IsFailure)
+        {
+            return result.Error.ToResponse();
+        }
         return TypedResults.Ok();
     }
 

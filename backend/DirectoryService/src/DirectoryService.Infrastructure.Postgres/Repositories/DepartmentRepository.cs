@@ -1,11 +1,15 @@
-﻿using DirectoryService.Core.Departments;
+﻿using CSharpFunctionalExtensions;
+using DirectoryService.Core.Departments;
 using DirectoryService.Domain.DepartmentLocations;
 using DirectoryService.Domain.Departments;
+using DirectoryService.SharedKernel.Errors;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace DirectoryService.Infrastructure.Postgres.Repositories;
 
-internal sealed class DepartmentRepository(AppDbContext dbContext) : IDepartmentRepository
+internal sealed class DepartmentRepository(AppDbContext dbContext)
+	: IDepartmentRepository
 {
 	private readonly AppDbContext _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
 
@@ -24,11 +28,14 @@ internal sealed class DepartmentRepository(AppDbContext dbContext) : IDepartment
 		_dbContext.DepartmentLocations.Remove(departmentLocation);
 	}
 
-	public Task<DepartmentLocation?> GetDepartmentLocation(Guid departmentId, Guid locationId,
+	public async Task<Result<DepartmentLocation, Error>> GetDepartmentLocation(Guid departmentId, Guid locationId,
 		CancellationToken cancellationToken = default)
 	{
-		return _dbContext.DepartmentLocations.SingleOrDefaultAsync(
+		var departmentLocation = await _dbContext.DepartmentLocations.SingleOrDefaultAsync(
 			dl => dl.LocationId == locationId && dl.DepartmentId == departmentId, cancellationToken);
+
+		return departmentLocation.ToResult(Error.NotFound("department.location.not.found",
+			"Связи между локацией и департаментов не существует."));
 	}
 
 	public Task<bool> ExistDepartmentLocation(Guid departmentId, Guid locationId,
@@ -38,13 +45,16 @@ internal sealed class DepartmentRepository(AppDbContext dbContext) : IDepartment
 			dl => dl.LocationId == locationId && dl.DepartmentId == departmentId, cancellationToken);
 	}
 
-	public ValueTask<Department?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+	public async ValueTask<Result<Department, Error>> GetByIdAsync(Guid id,
+		CancellationToken cancellationToken = default)
 	{
-		return _dbContext.Departments.FindAsync([id], cancellationToken);
+		var department = await _dbContext.Departments.FindAsync([id], cancellationToken);
+
+		return department.ToResult(Error.NotFound("department.not.found", $"Департамент с идентификатором {id} не найден"));
 	}
 
-	public Task Save(CancellationToken cancellationToken = default)
+	public async Task<UnitResult<Error>> Save(CancellationToken cancellationToken = default)
 	{
-		return _dbContext.SaveChangesAsync(cancellationToken);
+		return await _dbContext.SaveAsync(cancellationToken);
 	}
 }

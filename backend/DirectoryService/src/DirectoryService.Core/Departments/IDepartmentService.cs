@@ -1,13 +1,15 @@
-﻿using DirectoryService.Contracts.Departments;
+﻿using CSharpFunctionalExtensions;
+using DirectoryService.Contracts.Departments;
+using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.Core.Departments;
 
 public interface IDepartmentService
 {
-	Task<Guid> CreateAsync(CreateDepartmentDto dto, CancellationToken cancellationToken = default);
+	Task<Result<Guid, Error>> CreateAsync(CreateDepartmentDto dto, CancellationToken cancellationToken = default);
 
-	Task UpdateNameAsync(Guid id, UpdateDepartmentNameDto dto, CancellationToken cancellationToken = default);
+	Task<UnitResult<Error>> UpdateNameAsync(Guid id, UpdateDepartmentNameDto dto, CancellationToken cancellationToken = default);
 
-	Task AttachLocation(Guid departmentId, Guid locationId, CancellationToken cancellationToken = default);
-	Task DetachLocation(Guid departmentId, Guid locationId, CancellationToken cancellationToken = default);
+	Task<UnitResult<Error>> AttachLocation(Guid departmentId, Guid locationId, CancellationToken cancellationToken = default);
+	Task<UnitResult<Error>> DetachLocation(Guid departmentId, Guid locationId, CancellationToken cancellationToken = default);
 }
