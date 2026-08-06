@@ -1,5 +1,6 @@
 ﻿using DirectoryService.Contracts.Departments;
 using DirectoryService.Core.Departments;
+using DirectoryService.Web.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DirectoryService.Web.Controllers;
@@ -16,8 +17,13 @@ public sealed class DepartmentController(IDepartmentService departmentService) :
 	[HttpPost]
 	public async Task<IResult> Create([FromBody] CreateDepartmentDto dto, CancellationToken cancellationToken)
 	{
-		var id = await _departmentService.CreateAsync(dto, cancellationToken);
-		HttpContext.Response.Headers.Append("Location", id.ToString());
+		var result = await _departmentService.CreateAsync(dto, cancellationToken);
+		if (result.IsFailure)
+		{
+			return result.Error.ToResponse();
+		}
+
+		HttpContext.Response.Headers.Append("Location", result.Value.ToString());
 		return TypedResults.Created();
 	}
 
@@ -37,7 +43,11 @@ public sealed class DepartmentController(IDepartmentService departmentService) :
 	public async Task<IResult> UpdateName([FromRoute] Guid id, [FromBody] UpdateDepartmentNameDto dto,
 		CancellationToken cancellationToken)
 	{
-		await _departmentService.UpdateNameAsync(id, dto, cancellationToken);
+		var result = await _departmentService.UpdateNameAsync(id, dto, cancellationToken);
+		if (result.IsFailure)
+		{
+			return result.Error.ToResponse();
+		}
 		return TypedResults.Ok();
 	}
 
@@ -51,7 +61,11 @@ public sealed class DepartmentController(IDepartmentService departmentService) :
 	public async Task<IResult> AttachLocation([FromRoute] Guid departmentId, [FromRoute] Guid locationId,
 		CancellationToken cancellationToken)
 	{
-		await _departmentService.AttachLocation(departmentId, locationId, cancellationToken);
+		var result = await _departmentService.AttachLocation(departmentId, locationId, cancellationToken);
+		if (result.IsFailure)
+		{
+			return result.Error.ToResponse();
+		}
 		return TypedResults.Ok();
 	}
 
@@ -59,7 +73,11 @@ public sealed class DepartmentController(IDepartmentService departmentService) :
 	public async Task<IResult> DetachLocation([FromRoute] Guid departmentId, [FromRoute] Guid locationId,
 		CancellationToken cancellationToken)
 	{
-		await _departmentService.DetachLocation(departmentId, locationId, cancellationToken);
+		var result = await _departmentService.DetachLocation(departmentId, locationId, cancellationToken);
+		if (result.IsFailure)
+		{
+			return result.Error.ToResponse();
+		}
 		return TypedResults.Ok();
 	}
 

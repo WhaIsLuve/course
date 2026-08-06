@@ -1,4 +1,6 @@
+using CSharpFunctionalExtensions;
 using DirectoryService.Domain.Locations;
+using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.Core.Locations;
 
@@ -6,12 +8,12 @@ public interface ILocationRepository
 {
 	void Add(Location location);
 
-	ValueTask<Location?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+	ValueTask<Result<Location, Error>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-	Task<IReadOnlyList<Location>> GetByIdsAsync(IReadOnlyList<Guid> locationIds,
+	Task<Result<IReadOnlyList<Location>, Error>> GetByIdsAsync(IReadOnlyList<Guid> locationIds,
 		CancellationToken cancellationToken = default);
 
 	Task<bool> ExistWithSameNameAsync(string name, CancellationToken cancellationToken = default);
 
-	Task Save(CancellationToken cancellationToken = default);
+	Task<UnitResult<Error>> Save(CancellationToken cancellationToken = default);
 }

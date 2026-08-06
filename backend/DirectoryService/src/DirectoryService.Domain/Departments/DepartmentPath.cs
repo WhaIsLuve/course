@@ -22,25 +22,24 @@ public partial record DepartmentPath
     {
         const string code = "department.path.invalid";
         if (string.IsNullOrWhiteSpace(value))
-            return Result.Failure<DepartmentPath, Error>(Error.Validation(code, "Путь пустой"));
+            return Error.Validation(code, "Путь пустой");
 
         if (!value.StartsWith('/'))
-            return Result.Failure<DepartmentPath, Error>(Error.Validation(code, "Путь должен начинаться с /"));
+            return Error.Validation(code, "Путь должен начинаться с /");
 
         if (value.Contains("//", StringComparison.InvariantCultureIgnoreCase))
-            return Result.Failure<DepartmentPath, Error>(Error.Validation(code, "Путь не может содержать //"));
+            return Error.Validation(code, "Путь не может содержать //");
 
         var segments = value.TrimStart('/').Split('/');
         foreach (var segment in segments)
         {
             if (string.IsNullOrWhiteSpace(segment))
-                return Result.Failure<DepartmentPath, Error>(Error.Validation(code, "Путь не может содержать пустые сегменты"));
+                return Error.Validation(code, "Путь не может содержать пустые сегменты");
 
             if (!SegmentRegex.IsMatch(segment))
-                return Result.Failure<DepartmentPath, Error>(
-                    Error.Validation(code, "Путь может содержать только символы в нижнем регистре и цифры"));
+                return Error.Validation(code, "Путь может содержать только символы в нижнем регистре и цифры");
         }
 
-        return Result.Success<DepartmentPath, Error>(new DepartmentPath(value));
+        return new DepartmentPath(value);
     }
 }

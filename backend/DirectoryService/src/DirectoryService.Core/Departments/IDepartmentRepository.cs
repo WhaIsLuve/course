@@ -1,5 +1,7 @@
-﻿using DirectoryService.Domain.DepartmentLocations;
+﻿using CSharpFunctionalExtensions;
+using DirectoryService.Domain.DepartmentLocations;
 using DirectoryService.Domain.Departments;
+using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.Core.Departments;
 
@@ -9,12 +11,12 @@ public interface IDepartmentRepository
 	void AddDepartmentLocations(IReadOnlyList<DepartmentLocation> departmentLocations);
 	void RemoveDepartmentLocation(DepartmentLocation departmentLocation);
 
-	Task<DepartmentLocation?> GetDepartmentLocation(Guid departmentId, Guid locationId,
+	Task<Result<DepartmentLocation, Error>> GetDepartmentLocation(Guid departmentId, Guid locationId,
 		CancellationToken cancellationToken = default);
-	
+
 	Task<bool> ExistDepartmentLocation(Guid departmentId, Guid locationId,
 		CancellationToken cancellationToken = default);
 
-	ValueTask<Department?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-	Task Save(CancellationToken cancellationToken = default);
+	ValueTask<Result<Department, Error>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+	Task<UnitResult<Error>> Save(CancellationToken cancellationToken = default);
 }
