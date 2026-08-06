@@ -43,7 +43,7 @@ public record Envelope<T>
 	{
 		Result = result;
 		Error = error;
-		TimeGenerated = DateTime.Now;
+		TimeGenerated = DateTime.UtcNow;
 	}
 
 #pragma warning disable CA1000

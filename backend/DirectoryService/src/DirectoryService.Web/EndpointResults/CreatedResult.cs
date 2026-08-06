@@ -17,10 +17,9 @@ public sealed class CreatedResult<TValue> : IResult where TValue: notnull
 	{
 		ArgumentNullException.ThrowIfNull(httpContext);
 
-		var envelope = Envelope<TValue>.Ok();
+		var envelope = Envelope<TValue>.Ok(_value);
 
 		httpContext.Response.StatusCode = StatusCodes.Status201Created;
-		httpContext.Response.Headers.Append("Location", _value.ToString());
 
 		return httpContext.Response.WriteAsJsonAsync(envelope);
 	}
