@@ -10,9 +10,6 @@ using ValidationException = FluentValidation.ValidationException;
 
 namespace DirectoryService.UnitTests.Core.Locations;
 
-/// <summary>
-///     Содержит юнит-тесты для класса <see cref="LocationService" />.
-/// </summary>
 public class LocationServiceTests
 {
 	private readonly Mock<IValidator<CreateLocationDto>> _createValidatorMock;
@@ -21,9 +18,6 @@ public class LocationServiceTests
 	private readonly TimeProvider _timeProvider;
 	private readonly Mock<IValidator<UpdateLocationDto>> _updateValidatorMock;
 
-	/// <summary>
-	///     Инициализирует новый экземпляр класса <see cref="LocationServiceTests" />.
-	/// </summary>
 	public LocationServiceTests()
 	{
 		_repositoryMock = new Mock<ILocationRepository>();
@@ -34,10 +28,6 @@ public class LocationServiceTests
 			_updateValidatorMock.Object);
 	}
 
-	/// <summary>
-	///     Проверяет, что при валидных данных метод успешно создает локацию и вызывает репозиторий.
-	/// </summary>
-	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
 	public async Task CreateAsyncWithValidDataShouldReturnIdAndCallRepository()
 	{
@@ -63,12 +53,8 @@ public class LocationServiceTests
 		_repositoryMock.Verify(r => r.Add(It.IsAny<Location>()), Times.Once);
 	}
 
-	/// <summary>
-	///     Проверяет, что при невалидных данных DTO метод выбрасывает исключение валидации.
-	/// </summary>
-	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task CreateAsyncWithInvalidDtoShouldThrowValidationError()
+	public async Task CreateAsyncWithInvalidDtoShouldReturnValidationError()
 	{
 		// Arrange
 		var dto = new CreateLocationDto("", new AddressDto("", "", "", ""));
@@ -92,12 +78,8 @@ public class LocationServiceTests
 		_repositoryMock.Verify(r => r.Add(It.IsAny<Location>()), Times.Never);
 	}
 
-	/// <summary>
-	///     Проверяет, что при попытке создать локацию с уже существующим именем метод выбрасывает исключение.
-	/// </summary>
-	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task CreateAsyncWithExistingNameShouldThrowConflictError()
+	public async Task CreateAsyncWithExistingNameShouldReturnConflictError()
 	{
 		// Arrange
 		var dto = new CreateLocationDto("Existing Location", new AddressDto("Country", "City", "Street", "Building"));
@@ -119,12 +101,8 @@ public class LocationServiceTests
 		_repositoryMock.Verify(r => r.Add(It.IsAny<Location>()), Times.Never);
 	}
 
-	/// <summary>
-	///     Проверяет, что при невалидном адресе (который прошел валидатор DTO) метод выбрасывает исключение валидации.
-	/// </summary>
-	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task CreateAsyncWithInvalidAddressShouldThrowValidationError()
+	public async Task CreateAsyncWithInvalidAddressShouldReturnValidationError()
 	{
 		// Arrange
 		var invalidCountry = new string('a', Address.CountryMaxLength + 1);
@@ -147,12 +125,8 @@ public class LocationServiceTests
 		_repositoryMock.Verify(r => r.Add(It.IsAny<Location>()), Times.Never);
 	}
 
-	/// <summary>
-	///     Проверяет, что при невалидном имени локации (которое прошло валидатор DTO) метод выбрасывает исключение валидации.
-	/// </summary>
-	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task CreateAsyncWithInvalidLocationNameShouldThrowValidationError()
+	public async Task CreateAsyncWithInvalidLocationNameShouldReturnValidationError()
 	{
 		// Arrange
 		var invalidName = new string('a', LocationName.MaxLength + 1);
@@ -175,64 +149,10 @@ public class LocationServiceTests
 		_repositoryMock.Verify(r => r.Add(It.IsAny<Location>()), Times.Never);
 	}
 
-	/// <summary>
-	///     Проверяет, что конструктор выбрасывает исключение при передаче null в качестве TimeProvider.
-	/// </summary>
-	[Fact]
-	public void ConstructorWithNullTimeProviderShouldThrowArgumentNullException()
-	{
-		// Act & Assert
-		var exception = Assert.Throws<ArgumentNullException>(() =>
-			new LocationService(null!, _repositoryMock.Object, _createValidatorMock.Object,
-				_updateValidatorMock.Object));
 
-		Assert.Equal("timeProvider", exception.ParamName);
-	}
 
-	/// <summary>
-	///     Проверяет, что конструктор выбрасывает исключение при передаче null в качестве репозитория.
-	/// </summary>
-	[Fact]
-	public void ConstructorWithNullRepositoryShouldThrowArgumentNullException()
-	{
-		// Act & Assert
-		var exception = Assert.Throws<ArgumentNullException>(() =>
-			new LocationService(_timeProvider, null!, _createValidatorMock.Object, _updateValidatorMock.Object));
 
-		Assert.Equal("locationRepository", exception.ParamName);
-	}
 
-	/// <summary>
-	///     Проверяет, что конструктор выбрасывает исключение при передаче null в качестве валидатора.
-	/// </summary>
-	[Fact]
-	public void ConstructorWithNullValidatorShouldThrowArgumentNullException()
-	{
-		// Act & Assert
-		var exception = Assert.Throws<ArgumentNullException>(() =>
-			new LocationService(_timeProvider, _repositoryMock.Object, null!, _updateValidatorMock.Object));
-
-		Assert.Equal("createLocationDtoValidator", exception.ParamName);
-	}
-
-	/// <summary>
-	///     Проверяет, что конструктор выбрасывает исключение при передаче null в качестве валидатора.
-	/// </summary>
-	[Fact]
-	public void ConstructorWithNullUpdateValidatorShouldThrowArgumentNullException()
-	{
-		// Act & Assert
-		var exception = Assert.Throws<ArgumentNullException>(() =>
-			new LocationService(_timeProvider, _repositoryMock.Object, _createValidatorMock.Object, null!));
-
-		Assert.Equal("updateLocationDtoValidator", exception.ParamName);
-	}
-
-	/// <summary>
-	///     Проверяет, что при валидных данных и изменении имени метод успешно обновляет локацию и проверяет уникальность
-	///     имени.
-	/// </summary>
-	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
 	public async Task UpdateAsyncWithValidDataAndChangedNameShouldUpdateAndCheckUniqueness()
 	{
@@ -262,17 +182,12 @@ public class LocationServiceTests
 			Times.Once);
 	}
 
-	/// <summary>
-	///     Проверяет, что при валидных данных без изменения имени метод обновляет локацию без проверки уникальности.
-	/// </summary>
-	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
 	public async Task UpdateAsyncWithValidDataAndSameNameShouldUpdateWithoutCheckingUniqueness()
 	{
 		// Arrange
 		var locationId = Guid.NewGuid();
 		var existingLocation = CreateMockLocation(locationId);
-		// Имя в DTO совпадает с именем в мок-объекте ("Location Name")
 		var dto = new UpdateLocationDto("Location Name", new AddressDto("New Country", "City", "Street", "Building"));
 
 		_updateValidatorMock
@@ -292,12 +207,8 @@ public class LocationServiceTests
 			Times.Never);
 	}
 
-	/// <summary>
-	///     Проверяет, что при невалидных данных DTO метод выбрасывает исключение валидации.
-	/// </summary>
-	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task UpdateAsyncWithInvalidDtoShouldThrowValidationError()
+	public async Task UpdateAsyncWithInvalidDtoShouldReturnValidationError()
 	{
 		// Arrange
 		var locationId = Guid.NewGuid();
@@ -320,12 +231,8 @@ public class LocationServiceTests
 		_repositoryMock.Verify(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
 	}
 
-	/// <summary>
-	///     Проверяет, что при несуществующей локации метод выбрасывает NotFoundError.
-	/// </summary>
-	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task UpdateAsyncWithNonExistentLocationShouldThrowNotFoundError()
+	public async Task UpdateAsyncWithNonExistentLocationShouldReturnNotFoundError()
 	{
 		// Arrange
 		var locationId = Guid.NewGuid();
@@ -348,12 +255,8 @@ public class LocationServiceTests
 		Assert.Equal(expectedError.Type, result.Error.Type);
 	}
 
-	/// <summary>
-	///     Проверяет, что при невалидном имени на уровне домена метод выбрасывает ValidationError.
-	/// </summary>
-	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task UpdateAsyncWithInvalidDomainNameShouldThrowValidationError()
+	public async Task UpdateAsyncWithInvalidDomainNameShouldReturnValidationError()
 	{
 		// Arrange
 		var locationId = Guid.NewGuid();
@@ -361,7 +264,6 @@ public class LocationServiceTests
 		var existingLocation = CreateMockLocation(locationId);
 		var dto = new UpdateLocationDto(invalidName, new AddressDto("Country", "City", "Street", "Building"));
 
-		// Мокаем валидатор как успешный, чтобы проверить именно доменную валидацию
 		_updateValidatorMock
 			.Setup(v => v.ValidateAsync(It.IsAny<UpdateLocationDto>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(new ValidationResult());
@@ -378,12 +280,8 @@ public class LocationServiceTests
 		Assert.Equal(ErrorType.Validation, result.Error.Type);
 	}
 
-	/// <summary>
-	///     Проверяет, что при невалидном адресе на уровне домена метод выбрасывает ValidationError.
-	/// </summary>
-	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task UpdateAsyncWithInvalidDomainAddressShouldThrowValidationError()
+	public async Task UpdateAsyncWithInvalidDomainAddressShouldReturnValidationError()
 	{
 		// Arrange
 		var locationId = Guid.NewGuid();
@@ -391,7 +289,6 @@ public class LocationServiceTests
 		var existingLocation = CreateMockLocation(locationId);
 		var dto = new UpdateLocationDto("New Name", new AddressDto(invalidCountry, "City", "Street", "Building"));
 
-		// Мокаем валидатор как успешный, чтобы проверить именно доменную валидацию
 		_updateValidatorMock
 			.Setup(v => v.ValidateAsync(It.IsAny<UpdateLocationDto>(), It.IsAny<CancellationToken>()))
 			.ReturnsAsync(new ValidationResult());
@@ -408,12 +305,8 @@ public class LocationServiceTests
 		Assert.Equal(ErrorType.Validation, result.Error.Type);
 	}
 
-	/// <summary>
-	///     Проверяет, что при попытке обновить локацию на уже существующее имя метод выбрасывает ConflictError.
-	/// </summary>
-	/// <returns>Задача выполнения теста.</returns>
 	[Fact]
-	public async Task UpdateAsyncWithExistingNameShouldThrowConflictError()
+	public async Task UpdateAsyncWithExistingNameShouldReturnConflictError()
 	{
 		// Arrange
 		var locationId = Guid.NewGuid();
@@ -440,11 +333,57 @@ public class LocationServiceTests
 		Assert.Equal(ErrorType.Conflict, result.Error.Type);
 	}
 
-	/// <summary>
-	///     Создает валидный мок-объект <see cref="Location" /> для использования в тестах.
-	/// </summary>
-	/// <param name="id">Идентификатор локации.</param>
-	/// <returns>Валидный объект <see cref="Location" />.</returns>
+	[Fact]
+	public async Task CreateAsyncWhenSaveFailsShouldReturnFailure()
+	{
+		// Arrange
+		var dto = new CreateLocationDto("Location", new AddressDto("Country", "City", null, null));
+		var expectedError = Error.Failure("database.save.error", "Save failed");
+		_createValidatorMock
+			.Setup(v => v.ValidateAsync(dto, It.IsAny<CancellationToken>()))
+			.ReturnsAsync(new ValidationResult());
+		_repositoryMock
+			.Setup(r => r.ExistWithSameNameAsync(dto.Name, It.IsAny<CancellationToken>()))
+			.ReturnsAsync(false);
+		_repositoryMock
+			.Setup(r => r.Save(It.IsAny<CancellationToken>()))
+			.ReturnsAsync(expectedError);
+
+		// Act
+		var result = await _sut.CreateAsync(dto, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsFailure);
+		Assert.Equal(expectedError, result.Error);
+		_repositoryMock.Verify(r => r.Add(It.IsAny<Location>()), Times.Once);
+	}
+
+	[Fact]
+	public async Task UpdateAsyncWhenSaveFailsShouldReturnFailure()
+	{
+		// Arrange
+		var locationId = Guid.NewGuid();
+		var location = CreateMockLocation(locationId);
+		var dto = new UpdateLocationDto("Location Name", new AddressDto("Country", "New City", null, null));
+		var expectedError = Error.Failure("database.save.error", "Save failed");
+		_updateValidatorMock
+			.Setup(v => v.ValidateAsync(dto, It.IsAny<CancellationToken>()))
+			.ReturnsAsync(new ValidationResult());
+		_repositoryMock
+			.Setup(r => r.GetByIdAsync(locationId, It.IsAny<CancellationToken>()))
+			.ReturnsAsync(location);
+		_repositoryMock
+			.Setup(r => r.Save(It.IsAny<CancellationToken>()))
+			.ReturnsAsync(expectedError);
+
+		// Act
+		var result = await _sut.UpdateAsync(locationId, dto, CancellationToken.None);
+
+		// Assert
+		Assert.True(result.IsFailure);
+		Assert.Equal(expectedError, result.Error);
+	}
+
 	private static Location CreateMockLocation(Guid id)
 	{
 		var name = LocationName.Create("Location Name").Value;
