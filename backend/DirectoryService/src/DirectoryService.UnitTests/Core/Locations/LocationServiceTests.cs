@@ -1,3 +1,4 @@
+using System.Text.Json;
 using DirectoryService.Contracts.Locations;
 using DirectoryService.Core.Locations;
 using DirectoryService.Domain.Locations;
@@ -60,7 +61,7 @@ public class LocationServiceTests
 		var dto = new CreateLocationDto("", new AddressDto("", "", "", ""));
 		var validationFailures = new List<ValidationFailure>
 		{
-			new("Name", "Имя обязательное поле")
+			new("Name", JsonSerializer.Serialize(Error.Validation("code", "Имя обязательное поле")))
 		};
 
 		_createValidatorMock
@@ -215,7 +216,7 @@ public class LocationServiceTests
 		var dto = new UpdateLocationDto("", new AddressDto("", "", "", ""));
 		var validationFailures = new List<ValidationFailure>
 		{
-			new("Name", "Имя обязательное поле")
+			new("Name", JsonSerializer.Serialize(Error.Validation("code", "Имя обязательное поле")))
 		};
 
 		_updateValidatorMock

@@ -7,7 +7,7 @@ public record Error
 #pragma warning restore CA1716
 {
 	[JsonConstructor]
-	private Error(IReadOnlyList<ErrorMessage> messages, ErrorType type, bool isCritical = false)
+	private Error(IReadOnlyList<ErrorMessage> messages, ErrorType type)
 	{
 		Messages = [..messages];
 		Type = type;
