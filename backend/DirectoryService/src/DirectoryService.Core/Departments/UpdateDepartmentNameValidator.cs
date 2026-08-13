@@ -1,4 +1,6 @@
 using DirectoryService.Contracts.Departments;
+using DirectoryService.Core.Validations;
+using DirectoryService.Domain.Departments;
 using FluentValidation;
 
 namespace DirectoryService.Core.Departments;
@@ -8,8 +10,6 @@ public class UpdateDepartmentNameValidator : AbstractValidator<UpdateDepartmentN
     public UpdateDepartmentNameValidator()
     {
         RuleFor(x => x.Name)
-            .NotEmpty()
-            .WithMessage("Наименование не может быть пустым")
-            .WithErrorCode("department.name.invalid");
+            .MustBeValueObject(DepartmentName.Create);
     }
 }

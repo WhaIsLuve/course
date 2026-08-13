@@ -1,3 +1,4 @@
+using System.Text.Json;
 using DirectoryService.Contracts.Departments;
 using DirectoryService.Core.Departments;
 using DirectoryService.Core.Locations;
@@ -100,7 +101,7 @@ public class DepartmentServiceTests
 		var dto = new CreateDepartmentDto("", "", Guid.Empty, new List<Guid> { Guid.Empty });
 		var validationFailures = new List<ValidationFailure>
 		{
-			new("Name", "Наименование не может быть пустым")
+			new("Name", JsonSerializer.Serialize(Error.Validation("code", "Наименование не может быть пустым")))
 		};
 
 		_createValidatorMock
@@ -205,7 +206,7 @@ public class DepartmentServiceTests
 		var dto = new UpdateDepartmentNameDto("");
 		var validationFailures = new List<ValidationFailure>
 		{
-			new("Name", "Наименование не может быть пустым")
+			new("Name", JsonSerializer.Serialize(Error.Validation("code", "Наименование не может быть пустым")))
 		};
 
 		_updateNameValidatorMock
