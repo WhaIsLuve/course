@@ -1,9 +1,11 @@
 using CSharpFunctionalExtensions;
 using DirectoryService.Contracts.Locations;
 using DirectoryService.Core.Extensions;
+using DirectoryService.Core.Logging;
 using DirectoryService.Domain.Locations;
 using DirectoryService.SharedKernel.Errors;
 using FluentValidation;
+using Microsoft.Extensions.Logging;
 
 namespace DirectoryService.Core.Locations;
 
@@ -11,7 +13,8 @@ public sealed class LocationService(
 	TimeProvider timeProvider,
 	ILocationRepository locationRepository,
 	IValidator<CreateLocationDto> createLocationDtoValidator,
-	IValidator<UpdateLocationDto> updateLocationDtoValidator)
+	IValidator<UpdateLocationDto> updateLocationDtoValidator,
+	ILogger<LocationService> logger)
 	: ILocationService
 {
 	private readonly IValidator<CreateLocationDto> _createLocationDtoValidator = createLocationDtoValidator ??
@@ -19,6 +22,8 @@ public sealed class LocationService(
 
 	private readonly ILocationRepository _locationRepository =
 		locationRepository ?? throw new ArgumentNullException(nameof(locationRepository));
+
+	private readonly ILogger<LocationService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
 	private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
 
@@ -33,12 +38,12 @@ public sealed class LocationService(
 
 		var existWithSameName = await _locationRepository.ExistWithSameNameAsync(dto.Name, cancellationToken);
 		if (existWithSameName)
-        {
-            return Error.Conflict("location.name.exists",
-				"Локация с таким наименование уже существует");
-        }
+		{
+			return Error.Conflict("location.name.exists",
+				"Локация с таким наименованием уже существует");
+		}
 
-        var id = Guid.CreateVersion7();
+		var id = Guid.CreateVersion7();
 		var locationName = LocationName.Create(dto.Name);
 		if (locationName.IsFailure) return locationName.Error;
 		var address = Address.Create(dto.Address.Country,
@@ -55,6 +60,7 @@ public sealed class LocationService(
 		var result = await _locationRepository.Save(cancellationToken);
 		if (result.IsFailure) return result.Error;
 
+		_logger.LocationCreated(id);
 		return id;
 	}
 
@@ -80,12 +86,17 @@ public sealed class LocationService(
 			if (existWithSameName)
 			{
 				return Error.Conflict("location.name.exists",
-					"Локация с таким наименование уже существует");
+					"Локация с таким наименованием уже существует");
 			}
 		}
 
 		var result = location.Value.Update(locationName.Value, address.Value, _timeProvider.GetUtcNow().UtcDateTime);
 		if (result.IsFailure) return result.Error;
-		return await _locationRepository.Save(cancellationToken);
+
+		result = await _locationRepository.Save(cancellationToken);
+		if (result.IsFailure) return result.Error;
+
+		_logger.LocationUpdated(id);
+		return UnitResult.Success<Error>();
 	}
 }

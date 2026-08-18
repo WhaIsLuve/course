@@ -6,6 +6,7 @@ using DirectoryService.SharedKernel.Errors;
 using DirectoryService.SharedKernel.Exceptions;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.Extensions.Logging;
 using Moq;
 using ValidationException = FluentValidation.ValidationException;
 
@@ -18,15 +19,18 @@ public class LocationServiceTests
 	private readonly LocationService _sut;
 	private readonly TimeProvider _timeProvider;
 	private readonly Mock<IValidator<UpdateLocationDto>> _updateValidatorMock;
+	private readonly Mock<ILogger<LocationService>> _loggerMock;
 
 	public LocationServiceTests()
 	{
 		_repositoryMock = new Mock<ILocationRepository>();
 		_createValidatorMock = new Mock<IValidator<CreateLocationDto>>();
 		_updateValidatorMock = new Mock<IValidator<UpdateLocationDto>>();
+		_loggerMock = new Mock<ILogger<LocationService>>();
+		_loggerMock.Setup(logger => logger.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 		_timeProvider = TimeProvider.System;
 		_sut = new LocationService(_timeProvider, _repositoryMock.Object, _createValidatorMock.Object,
-			_updateValidatorMock.Object);
+			_updateValidatorMock.Object, _loggerMock.Object);
 	}
 
 	[Fact]
@@ -52,6 +56,7 @@ public class LocationServiceTests
 		// Assert
 		Assert.NotEqual(Guid.Empty, result);
 		_repositoryMock.Verify(r => r.Add(It.IsAny<Location>()), Times.Once);
+		AssertStructuredProperty("LocationId", result.Value);
 	}
 
 	[Fact]
@@ -390,5 +395,14 @@ public class LocationServiceTests
 		var name = LocationName.Create("Location Name").Value;
 		var address = Address.Create("Country", "City", null, null).Value;
 		return Location.Create(id, name, address, DateTime.UtcNow).Value;
+	}
+
+	private void AssertStructuredProperty(string propertyName, object expectedValue)
+	{
+		var invocation = Assert.Single(_loggerMock.Invocations,
+			x => string.Equals(x.Method.Name, nameof(ILogger.Log), StringComparison.Ordinal));
+		var state = Assert.IsAssignableFrom<IReadOnlyList<KeyValuePair<string, object?>>>(invocation.Arguments[2]);
+		Assert.Contains(state, property => string.Equals(property.Key, propertyName, StringComparison.Ordinal) &&
+			object.Equals(property.Value, expectedValue));
 	}
 }
