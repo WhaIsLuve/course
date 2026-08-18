@@ -1,14 +1,14 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
 using DirectoryService.Contracts.Departments;
 using DirectoryService.Core.Extensions;
 using DirectoryService.Core.Locations;
+using DirectoryService.Core.Logging;
 using DirectoryService.Domain.DepartmentLocations;
 using DirectoryService.Domain.Departments;
 using DirectoryService.Domain.Locations;
 using DirectoryService.SharedKernel.Errors;
-using DirectoryService.SharedKernel.Exceptions;
 using FluentValidation;
-using ValidationException = DirectoryService.SharedKernel.Exceptions.ValidationException;
+using Microsoft.Extensions.Logging;
 
 namespace DirectoryService.Core.Departments;
 
@@ -17,7 +17,8 @@ public sealed class DepartmentService(
 	IDepartmentRepository repository,
 	TimeProvider timeProvider,
 	ILocationRepository locationRepository,
-	IValidator<UpdateDepartmentNameDto> updateDepartmentNameValidator)
+	IValidator<UpdateDepartmentNameDto> updateDepartmentNameValidator,
+	ILogger<DepartmentService> logger)
 	: IDepartmentService
 {
 	private readonly IValidator<CreateDepartmentDto> _createDepartmentValidator =
@@ -25,6 +26,8 @@ public sealed class DepartmentService(
 
 	private readonly IDepartmentRepository _departmentRepository =
 		repository ?? throw new ArgumentNullException(nameof(repository));
+
+	private readonly ILogger<DepartmentService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
 	private readonly ILocationRepository _locationRepository =
 		locationRepository ?? throw new ArgumentNullException(nameof(locationRepository));
@@ -60,15 +63,12 @@ public sealed class DepartmentService(
 		var slug = DepartmentSlug.Create(dto.Slug);
 		if (slug.IsFailure) return slug.Error;
 		var parentInfo = parent is null ? null : new ParentInfo(parent.Id, parent.Path);
-		var dateTimeNow = _timeProvider.GetUtcNow()
-			.UtcDateTime;
+		var dateTimeNow = _timeProvider.GetUtcNow().UtcDateTime;
 
-		var department =
-			Department.Create(id, name.Value, slug.Value, parentInfo, dateTimeNow);
+		var department = Department.Create(id, name.Value, slug.Value, parentInfo, dateTimeNow);
 		if (department.IsFailure) return department.Error;
 
-		var result =
-			await AddNewLocationInDepartment(dto.LocationIds, department.Value, dateTimeNow, cancellationToken);
+		var result = await AddNewLocationInDepartment(dto.LocationIds, department.Value, dateTimeNow, cancellationToken);
 		if (result.IsFailure)
 		{
 			return result.Error;
@@ -82,7 +82,7 @@ public sealed class DepartmentService(
 			return result.Error;
 		}
 
-
+		_logger.DepartmentCreated(id, dto.ParentId, dto.LocationIds);
 		return id;
 	}
 
@@ -96,20 +96,25 @@ public sealed class DepartmentService(
 		if (department.IsFailure) return department.Error;
 		var newName = DepartmentName.Create(dto.Name);
 		if (newName.IsFailure) return newName.Error;
-		var result = department.Value.UpdateName(newName.Value, _timeProvider.GetUtcNow()
-			.UtcDateTime);
+		var result = department.Value.UpdateName(newName.Value, _timeProvider.GetUtcNow().UtcDateTime);
 		if (result.IsFailure) return result.Error;
-		return await _departmentRepository.Save(cancellationToken);
+
+		result = await _departmentRepository.Save(cancellationToken);
+		if (result.IsFailure) return result.Error;
+
+		_logger.DepartmentRenamed(id);
+		return UnitResult.Success<Error>();
 	}
 
-	public async Task<UnitResult<Error>> AttachLocation(Guid departmentId, Guid locationId, CancellationToken cancellationToken = default)
+	public async Task<UnitResult<Error>> AttachLocation(Guid departmentId, Guid locationId,
+		CancellationToken cancellationToken = default)
 	{
 		var department = await _departmentRepository.GetByIdAsync(departmentId, cancellationToken);
 		if (department.IsFailure) return department.Error;
 		var location = await _locationRepository.GetByIdAsync(locationId, cancellationToken);
-		if(location.IsFailure) return location.Error;
-		var existDepartmentLocation =
-			await _departmentRepository.ExistDepartmentLocation(department.Value.Id, location.Value.Id, cancellationToken);
+		if (location.IsFailure) return location.Error;
+		var existDepartmentLocation = await _departmentRepository.ExistDepartmentLocation(
+			department.Value.Id, location.Value.Id, cancellationToken);
 		if (existDepartmentLocation)
 			return Error.Conflict("department.location.exist",
 				"Связь между локацией и департаментов уже существует.");
@@ -119,20 +124,30 @@ public sealed class DepartmentService(
 		if (departmentLocation.IsFailure) return departmentLocation.Error;
 
 		_departmentRepository.AddDepartmentLocations([departmentLocation.Value]);
-		return await _departmentRepository.Save(cancellationToken);
+		var result = await _departmentRepository.Save(cancellationToken);
+		if (result.IsFailure) return result.Error;
+
+		_logger.LocationAttached(departmentId, locationId);
+		return UnitResult.Success<Error>();
 	}
 
-	public async Task<UnitResult<Error>> DetachLocation(Guid departmentId, Guid locationId, CancellationToken cancellationToken = default)
+	public async Task<UnitResult<Error>> DetachLocation(Guid departmentId, Guid locationId,
+		CancellationToken cancellationToken = default)
 	{
 		var department = await _departmentRepository.GetByIdAsync(departmentId, cancellationToken);
-		if(department.IsFailure) return department.Error;
+		if (department.IsFailure) return department.Error;
 		var location = await _locationRepository.GetByIdAsync(locationId, cancellationToken);
-		if(location.IsFailure) return location.Error;
-		var departmentLocation =
-			await _departmentRepository.GetDepartmentLocation(department.Value.Id, location.Value.Id, cancellationToken);
-		if(departmentLocation.IsFailure) return departmentLocation.Error;
+		if (location.IsFailure) return location.Error;
+		var departmentLocation = await _departmentRepository.GetDepartmentLocation(
+			department.Value.Id, location.Value.Id, cancellationToken);
+		if (departmentLocation.IsFailure) return departmentLocation.Error;
 		_departmentRepository.RemoveDepartmentLocation(departmentLocation.Value);
-		return await _departmentRepository.Save(cancellationToken);
+
+		var result = await _departmentRepository.Save(cancellationToken);
+		if (result.IsFailure) return result.Error;
+
+		_logger.LocationDetached(departmentId, locationId);
+		return UnitResult.Success<Error>();
 	}
 
 	private async ValueTask<UnitResult<Error>> AddNewLocationInDepartment(IReadOnlyList<Guid> dtoLocationIds,
@@ -143,13 +158,12 @@ public sealed class DepartmentService(
 		if (dtoLocationIds.Count == 0) return UnitResult.Success<Error>();
 
 		var locations = await _locationRepository.GetByIdsAsync(dtoLocationIds, cancellationToken);
-		if(locations.IsFailure) return  locations.Error;
+		if (locations.IsFailure) return locations.Error;
 
 		var departmentLocations = new List<DepartmentLocation>();
 		foreach (var location in locations.Value)
 		{
-			var departmentLocation =
-				DepartmentLocation.Create(Guid.CreateVersion7(), department.Id, location.Id, dateTimeNow);
+			var departmentLocation = DepartmentLocation.Create(Guid.CreateVersion7(), department.Id, location.Id, dateTimeNow);
 			if (departmentLocation.IsFailure) return departmentLocation.Error;
 			departmentLocations.Add(departmentLocation.Value);
 		}

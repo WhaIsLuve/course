@@ -1,13 +1,10 @@
-﻿
-
 using DirectoryService.SharedKernel.Envelopes;
 using DirectoryService.SharedKernel.Errors;
 using DirectoryService.SharedKernel.Exceptions;
-using DirectoryService.Web.EndpointResults;
 
 namespace DirectoryService.Web.Middlewares;
 
-internal sealed class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
+internal sealed partial class ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
 {
 	public async Task InvokeAsync(HttpContext context)
 	{
@@ -25,29 +22,30 @@ internal sealed class ExceptionMiddleware(RequestDelegate next, ILogger<Exceptio
 
 	private async Task HandleExceptionAsync(HttpContext context, Exception exception)
 	{
-#pragma warning disable CA1848
-		logger.LogError(exception, "Exception was thrown in education service");
-#pragma warning restore CA1848
-
-		var (statusCode, error) = exception switch
+		var (statusCode, error, isTechnicalFailure) = exception switch
 		{
-			NotFoundException ex => (StatusCodes.Status404NotFound, ex.Error),
-
-			ValidationException ex => (StatusCodes.Status400BadRequest, ex.Error),
-
-			ConflictException ex => (StatusCodes.Status409Conflict, ex.Error),
-
-			FailureException ex => (StatusCodes.Status500InternalServerError, ex.Error),
-
+			NotFoundException ex => (StatusCodes.Status404NotFound, ex.Error, false),
+			ValidationException ex => (StatusCodes.Status400BadRequest, ex.Error, false),
+			ConflictException ex => (StatusCodes.Status409Conflict, ex.Error, false),
+			FailureException ex => (StatusCodes.Status500InternalServerError, ex.Error, true),
 			BadHttpRequestException => (StatusCodes.Status400BadRequest,
-				Error.Validation("request.invalid", exception.Message)),
-
-			_ => (StatusCodes.Status500InternalServerError, Error.Failure("server.internal", exception.Message)),
+				Error.Validation("request.invalid", "Некорректный HTTP-запрос"), false),
+			_ => (StatusCodes.Status500InternalServerError,
+				Error.Failure("server.internal", "Внутренняя ошибка сервера"), true)
 		};
+
+		if (isTechnicalFailure)
+		{
+			LogUnhandledException(exception);
+		}
+
 		var envelope = Envelope.Fail(error);
 		context.Response.ContentType = "application/json";
 		context.Response.StatusCode = statusCode;
 
 		await context.Response.WriteAsJsonAsync(envelope);
 	}
+
+	[LoggerMessage(LogLevel.Error, "Техническая ошибка при обработке HTTP-запроса")]
+	partial void LogUnhandledException(Exception exception);
 }

@@ -9,6 +9,7 @@ using DirectoryService.SharedKernel.Errors;
 using DirectoryService.SharedKernel.Exceptions;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.Extensions.Logging;
 using Moq;
 using ValidationException = DirectoryService.SharedKernel.Exceptions.ValidationException;
 
@@ -22,6 +23,7 @@ public class DepartmentServiceTests
 	private readonly DepartmentService _sut;
 	private readonly TimeProvider _timeProvider;
 	private readonly Mock<IValidator<UpdateDepartmentNameDto>> _updateNameValidatorMock;
+	private readonly Mock<ILogger<DepartmentService>> _loggerMock;
 
 	public DepartmentServiceTests()
 	{
@@ -29,13 +31,16 @@ public class DepartmentServiceTests
 		_createValidatorMock = new Mock<IValidator<CreateDepartmentDto>>();
 		_departmentRepositoryMock = new Mock<IDepartmentRepository>();
 		_locationRepositoryMock = new Mock<ILocationRepository>();
+		_loggerMock = new Mock<ILogger<DepartmentService>>();
+		_loggerMock.Setup(logger => logger.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
 		_timeProvider = TimeProvider.System;
 		_sut = new DepartmentService(
 			_createValidatorMock.Object,
 			_departmentRepositoryMock.Object,
 			_timeProvider,
 			_locationRepositoryMock.Object,
-			_updateNameValidatorMock.Object);
+			_updateNameValidatorMock.Object,
+			_loggerMock.Object);
 	}
 
 	[Fact]
@@ -53,6 +58,7 @@ public class DepartmentServiceTests
 
 		// Assert
 		Assert.NotEqual(Guid.Empty, result);
+		AssertStructuredProperty("DepartmentId", result.Value);
 		_departmentRepositoryMock.Verify(r => r.AddDepartment(It.IsAny<Department>()), Times.Once);
 		_departmentRepositoryMock.Verify(r => r.AddDepartmentLocations(It.IsAny<IReadOnlyList<DepartmentLocation>>()),
 			Times.Never);
@@ -91,6 +97,8 @@ public class DepartmentServiceTests
 		_departmentRepositoryMock.Verify(
 			r => r.AddDepartmentLocations(It.Is<IReadOnlyList<DepartmentLocation>>(list => list.Count == 1)),
 			Times.Once);
+		AssertStructuredProperty("DepartmentId", result.Value);
+		AssertStructuredProperty("ParentDepartmentId", parentId);
 		_departmentRepositoryMock.Verify(r => r.Save(It.IsAny<CancellationToken>()), Times.Once);
 	}
 
@@ -301,6 +309,8 @@ public class DepartmentServiceTests
 		_departmentRepositoryMock.Verify(
 			r => r.AddDepartmentLocations(It.IsAny<IReadOnlyList<DepartmentLocation>>()),
 			Times.Once);
+		AssertStructuredProperty("DepartmentId", departmentId);
+		AssertStructuredProperty("LocationId", locationId);
 	}
 
 	[Fact]
@@ -621,5 +631,14 @@ public class DepartmentServiceTests
 
 		return Department.Create(id, name, slug, parentInfo, DateTime.UtcNow)
 			.Value;
+	}
+
+	private void AssertStructuredProperty(string propertyName, object expectedValue)
+	{
+		var invocation = Assert.Single(_loggerMock.Invocations,
+			x => string.Equals(x.Method.Name, nameof(ILogger.Log), StringComparison.Ordinal));
+		var state = Assert.IsAssignableFrom<IReadOnlyList<KeyValuePair<string, object?>>>(invocation.Arguments[2]);
+		Assert.Contains(state, property => string.Equals(property.Key, propertyName, StringComparison.Ordinal) &&
+			object.Equals(property.Value, expectedValue));
 	}
 }

@@ -5,11 +5,11 @@ using Npgsql;
 
 namespace DirectoryService.Infrastructure.Postgres.DataStorage;
 
-public sealed class NpgsqlDbConnectionFactory(IConfiguration config)
+public sealed class NpgsqlDbConnectionFactory(IConfiguration config, ILoggerFactory loggerFactory)
 	: IDbConnectionFactory, IDisposable, IAsyncDisposable
 {
 	private readonly NpgsqlDataSource _dataSource = new NpgsqlDataSourceBuilder(config.GetConnectionString("Postgres"))
-		.UseLoggerFactory(LoggerFactory.Create(c => c.AddConsole())).Build();
+		.UseLoggerFactory(loggerFactory).Build();
 
 	public async ValueTask<IDbConnection> GetConnectionAsync(CancellationToken cancellationToken = default)
 	{

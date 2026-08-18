@@ -8,6 +8,7 @@
 
 BdData
 InitDb
+SeqData
 
 # User-specific files
 *.rsuser
