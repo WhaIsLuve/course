@@ -1,4 +1,5 @@
 ﻿using DirectoryService.Core.Departments;
+using DirectoryService.Core.Abstractions;
 using DirectoryService.Core.Locations;
 using DirectoryService.Infrastructure.Postgres.DataStorage;
 using DirectoryService.Infrastructure.Postgres.Repositories;
@@ -12,6 +13,7 @@ public static class ServiceCollectionExtensions
 	{
 		services.AddScoped<ILocationRepository, LocationRepository>();
 		services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+		services.AddScoped<ITransactionManager, TransactionManager>();
 		services.AddSingleton<IDbConnectionFactory, NpgsqlDbConnectionFactory>();
 		return services;
 	}

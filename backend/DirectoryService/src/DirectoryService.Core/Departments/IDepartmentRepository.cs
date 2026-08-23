@@ -18,5 +18,4 @@ public interface IDepartmentRepository
 		CancellationToken cancellationToken = default);
 
 	ValueTask<Result<Department, Error>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-	Task<UnitResult<Error>> Save(CancellationToken cancellationToken = default);
 }

@@ -5,11 +5,11 @@ using FluentValidation;
 
 namespace DirectoryService.Core.Features.Departments.Rename;
 
-public sealed class RenameDepartmentValidator : AbstractValidator<UpdateDepartmentNameDto>
+public sealed class RenameDepartmentValidator : AbstractValidator<RenameDepartmentCommand>
 {
     public RenameDepartmentValidator()
     {
-        RuleFor(x => x.Name)
+        RuleFor(x => x.Dto.Name)
             .MustBeValueObject(DepartmentName.Create);
     }
 }

@@ -53,8 +53,4 @@ internal sealed class DepartmentRepository(AppDbContext dbContext)
 		return department.ToResult(Error.NotFound("department.not.found", $"Департамент с идентификатором {id} не найден"));
 	}
 
-	public async Task<UnitResult<Error>> Save(CancellationToken cancellationToken = default)
-	{
-		return await _dbContext.SaveAsync(cancellationToken);
-	}
 }

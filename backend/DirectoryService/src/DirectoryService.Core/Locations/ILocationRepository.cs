@@ -15,5 +15,4 @@ public interface ILocationRepository
 
 	Task<bool> ExistWithSameNameAsync(string name, CancellationToken cancellationToken = default);
 
-	Task<UnitResult<Error>> Save(CancellationToken cancellationToken = default);
 }

@@ -92,19 +92,16 @@ public sealed class AttachLocationHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsyncWhenSaveFailsShouldReturnFailure()
+    public async Task HandleAsyncWhenDataIsValidShouldPrepareChanges()
     {
         var departmentId = Guid.CreateVersion7();
         var locationId = Guid.CreateVersion7();
         SetupEntities(departmentId, locationId);
         _departmentRepositoryMock.Setup(r => r.ExistDepartmentLocation(departmentId, locationId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
-        var expectedError = Error.Failure("database.save.error", "Save failed");
-        _departmentRepositoryMock.Setup(r => r.Save(It.IsAny<CancellationToken>())).ReturnsAsync(expectedError);
-
         var result = await _sut.HandleAsync(new AttachLocationCommand(departmentId, locationId));
 
-        Assert.True(result.IsFailure);
-        Assert.Equal(expectedError, result.Error);
+        Assert.True(result.IsSuccess);
+        _departmentRepositoryMock.Verify(r => r.AddDepartmentLocations(It.IsAny<IReadOnlyList<DepartmentLocation>>()), Times.Once);
     }
 
     private void SetupEntities(Guid departmentId, Guid locationId)
