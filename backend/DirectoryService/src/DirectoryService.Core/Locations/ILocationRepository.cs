@@ -7,6 +7,7 @@ namespace DirectoryService.Core.Locations;
 public interface ILocationRepository
 {
 	void Add(Location location);
+	void Remove(Location location);
 
 	ValueTask<Result<Location, Error>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
@@ -14,5 +15,7 @@ public interface ILocationRepository
 		CancellationToken cancellationToken = default);
 
 	Task<bool> ExistWithSameNameAsync(string name, CancellationToken cancellationToken = default);
+
+	Task<bool> HasDepartmentLinksAsync(Guid locationId, CancellationToken cancellationToken = default);
 
 }

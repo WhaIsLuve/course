@@ -3,6 +3,7 @@ using IResult = Microsoft.AspNetCore.Http.IResult;
 using DirectoryService.Contracts.Locations;
 using DirectoryService.Core.Abstractions;
 using DirectoryService.Core.Features.Locations.Create;
+using DirectoryService.Core.Features.Locations.Delete;
 using DirectoryService.Core.Features.Locations.Update;
 using DirectoryService.SharedKernel.Envelopes;
 using DirectoryService.SharedKernel.Errors;
@@ -17,7 +18,8 @@ namespace DirectoryService.Web.Controllers;
 #pragma warning disable S6960
 public sealed class LocationController(
     ICommandHandler<CreateLocationCommand, Result<Guid, Error>> createLocationHandler,
-    ICommandHandler<UpdateLocationCommand, UnitResult<Error>> updateLocationHandler) : ControllerBase
+    ICommandHandler<UpdateLocationCommand, UnitResult<Error>> updateLocationHandler,
+    ICommandHandler<DeleteLocationCommand, UnitResult<Error>> deleteLocationHandler) : ControllerBase
 #pragma warning restore CA1515
 #pragma warning restore S6960
 {
@@ -25,6 +27,8 @@ public sealed class LocationController(
         createLocationHandler ?? throw new ArgumentNullException(nameof(createLocationHandler));
     private readonly ICommandHandler<UpdateLocationCommand, UnitResult<Error>> _updateLocationHandler =
         updateLocationHandler ?? throw new ArgumentNullException(nameof(updateLocationHandler));
+    private readonly ICommandHandler<DeleteLocationCommand, UnitResult<Error>> _deleteLocationHandler =
+        deleteLocationHandler ?? throw new ArgumentNullException(nameof(deleteLocationHandler));
 
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Envelope))]
@@ -67,8 +71,12 @@ public sealed class LocationController(
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IResult> Delete([FromRoute] Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(Envelope))]
+    public async Task<EndpointResult> Delete([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-        return TypedResults.Ok();
+        return await _deleteLocationHandler.HandleAsync(new DeleteLocationCommand(id), cancellationToken);
     }
 }

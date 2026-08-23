@@ -1,4 +1,5 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
+using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.Domain.Positions;
 
@@ -20,36 +21,31 @@ public sealed class Position : Entity<Guid>
 
     public DateTime? UpdatedAt { get; private set; }
 
-    public static Result<Position, string> Create(
-        Guid id,
-        PositionName name,
-        DateTime createdAt)
+    public static Result<Position, Error> Create(Guid id, PositionName name, DateTime createdAt)
     {
         if (id == Guid.Empty)
-            return Result.Failure<Position, string>("Id cannot be empty");
+            return Error.Validation("position.id.invalid", "Id is required");
 
         if (createdAt == default)
-            return Result.Failure<Position, string>("CreatedAt is required");
+            return Error.Validation("position.createdAt.invalid", "CreatedAt is required");
 
-        return Result.Success<Position, string>(new Position(id, name, createdAt));
+        return Result.Success<Position, Error>(new Position(id, name, createdAt));
     }
 
-    public UnitResult<string> Update(
-        PositionName name,
-        DateTime updatedAt)
+    public UnitResult<Error> Update(PositionName name, DateTime updatedAt)
     {
         if (updatedAt == default)
-            return UnitResult.Failure("UpdatedAt is required");
+            return UnitResult.Failure(Error.Validation("position.updatedAt.invalid", "UpdatedAt is required"));
 
         if (CreatedAt > updatedAt)
-            return UnitResult.Failure("UpdatedAt must be greater than CreatedAt");
+            return UnitResult.Failure(Error.Validation("position.updatedAt.invalid", "UpdatedAt must be greater than CreatedAt"));
 
         if (CreatedAt == updatedAt)
-            return UnitResult.Failure("UpdatedAt cannot be equal to CreatedAt");
+            return UnitResult.Failure(Error.Validation("position.updatedAt.invalid", "UpdatedAt cannot be equal to CreatedAt"));
 
         Name = name;
         UpdatedAt = updatedAt;
 
-        return UnitResult.Success<string>();
+        return UnitResult.Success<Error>();
     }
 }
