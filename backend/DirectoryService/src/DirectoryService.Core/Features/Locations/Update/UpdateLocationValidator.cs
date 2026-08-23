@@ -3,11 +3,11 @@ using DirectoryService.Core.Validations;
 using DirectoryService.Domain.Locations;
 using FluentValidation;
 
-namespace DirectoryService.Core.Locations;
+namespace DirectoryService.Core.Features.Locations.Update;
 
-public class CreateLocationValidator : AbstractValidator<CreateLocationDto>
+public sealed class UpdateLocationValidator : AbstractValidator<UpdateLocationDto>
 {
-    public CreateLocationValidator()
+    public UpdateLocationValidator()
     {
         RuleFor(x => x.Name)
             .MustBeValueObject(LocationName.Create);
