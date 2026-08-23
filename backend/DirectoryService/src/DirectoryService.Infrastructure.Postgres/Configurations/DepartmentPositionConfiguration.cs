@@ -21,6 +21,9 @@ internal sealed class DepartmentPositionConfiguration : IEntityTypeConfiguration
                .HasColumnName("position_id");
         builder.Property(x => x.CreatedAt)
                .HasColumnName("created_at");
+        builder.HasIndex(x => new { x.DepartmentId, x.PositionId })
+               .HasDatabaseName("IX_department_positions_department_position")
+               .IsUnique();
         builder.HasOne<Department>()
                .WithMany()
                .HasForeignKey(x => x.DepartmentId)
@@ -28,6 +31,6 @@ internal sealed class DepartmentPositionConfiguration : IEntityTypeConfiguration
         builder.HasOne<Position>()
                .WithMany()
                .HasForeignKey(x => x.PositionId)
-               .OnDelete(DeleteBehavior.Cascade);
+               .OnDelete(DeleteBehavior.Restrict);
     }
 }

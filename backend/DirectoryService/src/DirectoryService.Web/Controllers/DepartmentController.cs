@@ -3,8 +3,11 @@ using IResult = Microsoft.AspNetCore.Http.IResult;
 using DirectoryService.Contracts.Departments;
 using DirectoryService.Core.Abstractions;
 using DirectoryService.Core.Features.Departments.AttachLocation;
+using DirectoryService.Core.Features.Departments.AttachPosition;
 using DirectoryService.Core.Features.Departments.Create;
+using DirectoryService.Core.Features.Departments.Delete;
 using DirectoryService.Core.Features.Departments.DetachLocation;
+using DirectoryService.Core.Features.Departments.DetachPosition;
 using DirectoryService.Core.Features.Departments.Rename;
 using DirectoryService.SharedKernel.Envelopes;
 using DirectoryService.SharedKernel.Errors;
@@ -21,7 +24,10 @@ public sealed class DepartmentController(
     ICommandHandler<CreateDepartmentCommand, Result<Guid, Error>> createDepartmentHandler,
     ICommandHandler<RenameDepartmentCommand, UnitResult<Error>> renameDepartmentHandler,
     ICommandHandler<AttachLocationCommand, UnitResult<Error>> attachLocationHandler,
-    ICommandHandler<DetachLocationCommand, UnitResult<Error>> detachLocationHandler) : ControllerBase
+    ICommandHandler<DetachLocationCommand, UnitResult<Error>> detachLocationHandler,
+    ICommandHandler<DeleteDepartmentCommand, UnitResult<Error>> deleteDepartmentHandler,
+    ICommandHandler<AttachPositionCommand, UnitResult<Error>> attachPositionHandler,
+    ICommandHandler<DetachPositionCommand, UnitResult<Error>> detachPositionHandler) : ControllerBase
 #pragma warning restore CA1515
 #pragma warning restore S6960
 {
@@ -33,6 +39,12 @@ public sealed class DepartmentController(
         attachLocationHandler ?? throw new ArgumentNullException(nameof(attachLocationHandler));
     private readonly ICommandHandler<DetachLocationCommand, UnitResult<Error>> _detachLocationHandler =
         detachLocationHandler ?? throw new ArgumentNullException(nameof(detachLocationHandler));
+    private readonly ICommandHandler<DeleteDepartmentCommand, UnitResult<Error>> _deleteDepartmentHandler =
+        deleteDepartmentHandler ?? throw new ArgumentNullException(nameof(deleteDepartmentHandler));
+    private readonly ICommandHandler<AttachPositionCommand, UnitResult<Error>> _attachPositionHandler =
+        attachPositionHandler ?? throw new ArgumentNullException(nameof(attachPositionHandler));
+    private readonly ICommandHandler<DetachPositionCommand, UnitResult<Error>> _detachPositionHandler =
+        detachPositionHandler ?? throw new ArgumentNullException(nameof(detachPositionHandler));
 
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Envelope))]
@@ -74,9 +86,12 @@ public sealed class DepartmentController(
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IResult> Delete([FromRoute] Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(Envelope))]
+    public async Task<EndpointResult> Delete([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-        return TypedResults.Ok();
+        return await _deleteDepartmentHandler.HandleAsync(new DeleteDepartmentCommand(id), cancellationToken);
     }
 
     [HttpPost("{departmentId:guid}/location/{locationId:guid}")]
@@ -107,10 +122,26 @@ public sealed class DepartmentController(
             cancellationToken);
     }
 
-    [HttpPut("{id:guid}/position")]
-    public async Task<IResult> AddPosition([FromRoute] Guid id, [FromQuery] Guid positionId,
+    [HttpPost("{departmentId:guid}/positions/{positionId:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(Envelope))]
+    public async Task<EndpointResult> AttachPosition([FromRoute] Guid departmentId, [FromRoute] Guid positionId,
         CancellationToken cancellationToken)
     {
-        return TypedResults.Ok();
+        return await _attachPositionHandler.HandleAsync(
+            new AttachPositionCommand(departmentId, positionId), cancellationToken);
+    }
+
+    [HttpDelete("{departmentId:guid}/positions/{positionId:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(Envelope))]
+    public async Task<EndpointResult> DetachPosition([FromRoute] Guid departmentId, [FromRoute] Guid positionId,
+        CancellationToken cancellationToken)
+    {
+        return await _detachPositionHandler.HandleAsync(
+            new DetachPositionCommand(departmentId, positionId), cancellationToken);
     }
 }

@@ -15,6 +15,11 @@ internal sealed class LocationRepository(AppDbContext dbContext) : ILocationRepo
 		_dbContext.Locations.Add(location);
 	}
 
+	public void Remove(Location location)
+	{
+		_dbContext.Locations.Remove(location);
+	}
+
 	public async ValueTask<Result<Location, Error>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
 	{
 		var location = await _dbContext.Locations.FindAsync([id], cancellationToken);
@@ -41,6 +46,11 @@ internal sealed class LocationRepository(AppDbContext dbContext) : ILocationRepo
 #pragma warning disable CA1862, RCS1155, CA1304, MA0011, CA1304, CA1311
 		return _dbContext.Locations.AnyAsync(l => l.Name.Value.ToUpper() == name.ToUpper(), cancellationToken);
 #pragma warning restore CA1311, CA1304, MA0011, CA1304, RCS1155, CA1862
+	}
+
+	public Task<bool> HasDepartmentLinksAsync(Guid locationId, CancellationToken cancellationToken = default)
+	{
+		return _dbContext.DepartmentLocations.AnyAsync(x => x.LocationId == locationId, cancellationToken);
 	}
 
 }

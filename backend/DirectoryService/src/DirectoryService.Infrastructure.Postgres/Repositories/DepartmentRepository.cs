@@ -1,6 +1,7 @@
 ﻿using CSharpFunctionalExtensions;
 using DirectoryService.Core.Departments;
 using DirectoryService.Domain.DepartmentLocations;
+using DirectoryService.Domain.DepartmentPositions;
 using DirectoryService.Domain.Departments;
 using DirectoryService.SharedKernel.Errors;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +19,11 @@ internal sealed class DepartmentRepository(AppDbContext dbContext)
 		_dbContext.Departments.Add(department);
 	}
 
+	public void RemoveDepartment(Department department)
+	{
+		_dbContext.Departments.Remove(department);
+	}
+
 	public void AddDepartmentLocations(IReadOnlyList<DepartmentLocation> departmentLocations)
 	{
 		_dbContext.DepartmentLocations.AddRange(departmentLocations);
@@ -26,6 +32,16 @@ internal sealed class DepartmentRepository(AppDbContext dbContext)
 	public void RemoveDepartmentLocation(DepartmentLocation departmentLocation)
 	{
 		_dbContext.DepartmentLocations.Remove(departmentLocation);
+	}
+
+	public void AddDepartmentPosition(DepartmentPosition departmentPosition)
+	{
+		_dbContext.DepartmentPositions.Add(departmentPosition);
+	}
+
+	public void RemoveDepartmentPosition(DepartmentPosition departmentPosition)
+	{
+		_dbContext.DepartmentPositions.Remove(departmentPosition);
 	}
 
 	public async Task<Result<DepartmentLocation, Error>> GetDepartmentLocation(Guid departmentId, Guid locationId,
@@ -43,6 +59,23 @@ internal sealed class DepartmentRepository(AppDbContext dbContext)
 	{
 		return _dbContext.DepartmentLocations.AnyAsync(
 			dl => dl.LocationId == locationId && dl.DepartmentId == departmentId, cancellationToken);
+	}
+
+	public Task<bool> ExistDepartmentPosition(Guid departmentId, Guid positionId,
+		CancellationToken cancellationToken = default)
+	{
+		return _dbContext.DepartmentPositions.AnyAsync(
+			dp => dp.DepartmentId == departmentId && dp.PositionId == positionId, cancellationToken);
+	}
+
+	public async Task<Result<DepartmentPosition, Error>> GetDepartmentPosition(Guid departmentId, Guid positionId,
+		CancellationToken cancellationToken = default)
+	{
+		var departmentPosition = await _dbContext.DepartmentPositions.SingleOrDefaultAsync(
+			dp => dp.DepartmentId == departmentId && dp.PositionId == positionId, cancellationToken);
+
+		return departmentPosition.ToResult(Error.NotFound("department.position.not.found",
+			"Связи между подразделением и должностью не существует."));
 	}
 
 	public async ValueTask<Result<Department, Error>> GetByIdAsync(Guid id,

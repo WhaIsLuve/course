@@ -1,4 +1,5 @@
-﻿using CSharpFunctionalExtensions;
+using CSharpFunctionalExtensions;
+using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.Domain.DepartmentPositions;
 
@@ -21,25 +22,25 @@ public sealed class DepartmentPosition : Entity<Guid>
 
     public DateTime CreatedAt { get; }
 
-    public static Result<DepartmentPosition, string> Create(
+    public static Result<DepartmentPosition, Error> Create(
         Guid id,
         Guid departmentId,
         Guid positionId,
         DateTime createdAt)
     {
         if (id == Guid.Empty)
-            return Result.Failure<DepartmentPosition, string>("Id cannot be empty");
+            return Error.Validation("department.position.id.invalid", "Id is required");
 
         if (departmentId == Guid.Empty)
-            return Result.Failure<DepartmentPosition, string>("DepartmentId cannot be empty");
+            return Error.Validation("department.position.department.id.invalid", "DepartmentId is required");
 
         if (positionId == Guid.Empty)
-            return Result.Failure<DepartmentPosition, string>("PositionId cannot be empty");
+            return Error.Validation("department.position.position.id.invalid", "PositionId is required");
 
         if (createdAt == default)
-            return Result.Failure<DepartmentPosition, string>("CreatedAt is required");
+            return Error.Validation("department.position.createdAt.invalid", "CreatedAt is required");
 
-        return Result.Success<DepartmentPosition, string>(
+        return Result.Success<DepartmentPosition, Error>(
             new DepartmentPosition(id, departmentId, positionId, createdAt));
     }
 }
