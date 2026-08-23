@@ -43,8 +43,4 @@ internal sealed class LocationRepository(AppDbContext dbContext) : ILocationRepo
 #pragma warning restore CA1311, CA1304, MA0011, CA1304, RCS1155, CA1862
 	}
 
-	public Task<UnitResult<Error>> Save(CancellationToken cancellationToken = default)
-	{
-		return _dbContext.SaveAsync(cancellationToken);
-	}
 }

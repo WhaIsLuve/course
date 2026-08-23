@@ -4,4 +4,9 @@ using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.Core.Features.Departments.DetachLocation;
 
-public sealed record DetachLocationCommand(Guid DepartmentId, Guid LocationId) : ICommand<UnitResult<Error>>;
+public sealed record DetachLocationCommand(Guid DepartmentId, Guid LocationId) : ICommand<UnitResult<Error>>
+{
+	public UnitResult<Error> CreateFailure(Error failure) => UnitResult.Failure(failure);
+
+	public bool IsFailure(UnitResult<Error> response) => response.IsFailure;
+}

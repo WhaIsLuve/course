@@ -51,10 +51,6 @@ public sealed class AttachLocationHandler(
             return departmentLocation.Error;
 
         _departmentRepository.AddDepartmentLocations([departmentLocation.Value]);
-        var result = await _departmentRepository.Save(cancellationToken);
-        if (result.IsFailure)
-            return result.Error;
-
         _logger.LocationAttached(command.DepartmentId, command.LocationId);
         return UnitResult.Success<Error>();
     }

@@ -2,26 +2,22 @@ using CSharpFunctionalExtensions;
 using DirectoryService.Contracts.Departments;
 using DirectoryService.Core.Abstractions;
 using DirectoryService.Core.Departments;
-using DirectoryService.Core.Extensions;
 using DirectoryService.Core.Locations;
 using DirectoryService.Core.Logging;
 using DirectoryService.Domain.DepartmentLocations;
 using DirectoryService.Domain.Departments;
 using DirectoryService.SharedKernel.Errors;
-using FluentValidation;
 using Microsoft.Extensions.Logging;
 
 namespace DirectoryService.Core.Features.Departments.Create;
 
 public sealed class CreateDepartmentHandler(
-    IValidator<CreateDepartmentDto> validator,
     IDepartmentRepository departmentRepository,
     TimeProvider timeProvider,
     ILocationRepository locationRepository,
     ILogger<CreateDepartmentHandler> logger)
     : ICommandHandler<CreateDepartmentCommand, Result<Guid, Error>>
 {
-    private readonly IValidator<CreateDepartmentDto> _validator = validator ?? throw new ArgumentNullException(nameof(validator));
     private readonly IDepartmentRepository _departmentRepository =
         departmentRepository ?? throw new ArgumentNullException(nameof(departmentRepository));
     private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
@@ -33,10 +29,6 @@ public sealed class CreateDepartmentHandler(
         CreateDepartmentCommand command,
         CancellationToken cancellationToken = default)
     {
-        var validationResult = await _validator.ValidateAsync(command.Dto, cancellationToken);
-        if (!validationResult.IsValid)
-            return Error.Validation(validationResult.ToErrorMessages());
-
         Department? parent = null;
 
         if (command.Dto.ParentId != null)
@@ -68,10 +60,6 @@ public sealed class CreateDepartmentHandler(
             return result.Error;
 
         _departmentRepository.AddDepartment(department.Value);
-
-        result = await _departmentRepository.Save(cancellationToken);
-        if (result.IsFailure)
-            return result.Error;
 
         _logger.DepartmentCreated(id, command.Dto.ParentId, command.Dto.LocationIds);
         return id;

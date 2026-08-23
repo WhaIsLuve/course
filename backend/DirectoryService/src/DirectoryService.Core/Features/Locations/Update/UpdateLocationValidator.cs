@@ -5,14 +5,14 @@ using FluentValidation;
 
 namespace DirectoryService.Core.Features.Locations.Update;
 
-public sealed class UpdateLocationValidator : AbstractValidator<UpdateLocationDto>
+public sealed class UpdateLocationValidator : AbstractValidator<UpdateLocationCommand>
 {
     public UpdateLocationValidator()
     {
-        RuleFor(x => x.Name)
+        RuleFor(x => x.Dto.Name)
             .MustBeValueObject(LocationName.Create);
 
-        RuleFor(x => x.Address)
+        RuleFor(x => x.Dto.Address)
             .MustBeValueObject(a => Address.Create(a.Country, a.City, a.Street, a.Building));
     }
 }

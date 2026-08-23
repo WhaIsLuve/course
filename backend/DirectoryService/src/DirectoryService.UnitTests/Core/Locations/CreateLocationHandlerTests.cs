@@ -1,11 +1,8 @@
-using System.Text.Json;
 using DirectoryService.Contracts.Locations;
 using DirectoryService.Core.Features.Locations.Create;
 using DirectoryService.Core.Locations;
 using DirectoryService.Domain.Locations;
 using DirectoryService.SharedKernel.Errors;
-using FluentValidation;
-using FluentValidation.Results;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -13,7 +10,6 @@ namespace DirectoryService.UnitTests.Core.Locations;
 
 public sealed class CreateLocationHandlerTests
 {
-    private readonly Mock<IValidator<CreateLocationDto>> _validatorMock = new();
     private readonly Mock<ILocationRepository> _repositoryMock = new();
     private readonly Mock<ILogger<CreateLocationHandler>> _loggerMock = new();
     private readonly CreateLocationHandler _sut;
@@ -24,7 +20,6 @@ public sealed class CreateLocationHandlerTests
         _sut = new CreateLocationHandler(
             TimeProvider.System,
             _repositoryMock.Object,
-            _validatorMock.Object,
             _loggerMock.Object);
     }
 
@@ -32,7 +27,6 @@ public sealed class CreateLocationHandlerTests
     public async Task HandleAsyncWithValidDataShouldReturnIdAndCallRepository()
     {
         var dto = new CreateLocationDto("Test Location", new AddressDto("Country", "City", "Street", "Building"));
-        SetupValid(dto);
         _repositoryMock.Setup(r => r.ExistWithSameNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
@@ -47,17 +41,11 @@ public sealed class CreateLocationHandlerTests
     public async Task HandleAsyncWithInvalidDtoShouldReturnValidationError()
     {
         var dto = new CreateLocationDto("", new AddressDto("", "", "", ""));
-        _validatorMock.Setup(v => v.ValidateAsync(It.IsAny<CreateLocationDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ValidationResult(new List<ValidationFailure>
-            {
-                new("Name", JsonSerializer.Serialize(Error.Validation("code", "Имя обязательное поле")))
-            }));
 
         var result = await _sut.HandleAsync(new CreateLocationCommand(dto));
 
         Assert.True(result.IsFailure);
         Assert.Equal(ErrorType.Validation, result.Error.Type);
-        _repositoryMock.Verify(r => r.ExistWithSameNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _repositoryMock.Verify(r => r.Add(It.IsAny<Location>()), Times.Never);
     }
 
@@ -65,7 +53,6 @@ public sealed class CreateLocationHandlerTests
     public async Task HandleAsyncWithExistingNameShouldReturnConflictError()
     {
         var dto = new CreateLocationDto("Existing Location", new AddressDto("Country", "City", "Street", "Building"));
-        SetupValid(dto);
         _repositoryMock.Setup(r => r.ExistWithSameNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
@@ -81,7 +68,6 @@ public sealed class CreateLocationHandlerTests
     {
         var invalidCountry = new string('a', Address.CountryMaxLength + 1);
         var dto = new CreateLocationDto("Test Location", new AddressDto(invalidCountry, "City", "Street", "Building"));
-        SetupValid(dto);
         _repositoryMock.Setup(r => r.ExistWithSameNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
@@ -97,7 +83,6 @@ public sealed class CreateLocationHandlerTests
     {
         var invalidName = new string('a', LocationName.MaxLength + 1);
         var dto = new CreateLocationDto(invalidName, new AddressDto("Country", "City", "Street", "Building"));
-        SetupValid(dto);
         _repositoryMock.Setup(r => r.ExistWithSameNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
@@ -109,23 +94,15 @@ public sealed class CreateLocationHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsyncWhenSaveFailsShouldReturnFailure()
+    public async Task HandleAsyncWhenDataIsValidShouldPrepareChanges()
     {
         var dto = new CreateLocationDto("Location", new AddressDto("Country", "City", null, null));
-        SetupValid(dto);
         _repositoryMock.Setup(r => r.ExistWithSameNameAsync(dto.Name, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
-        var expectedError = Error.Failure("database.save.error", "Save failed");
-        _repositoryMock.Setup(r => r.Save(It.IsAny<CancellationToken>())).ReturnsAsync(expectedError);
-
         var result = await _sut.HandleAsync(new CreateLocationCommand(dto));
 
-        Assert.True(result.IsFailure);
-        Assert.Equal(expectedError, result.Error);
+        Assert.True(result.IsSuccess);
         _repositoryMock.Verify(r => r.Add(It.IsAny<Location>()), Times.Once);
     }
 
-    private void SetupValid(CreateLocationDto dto) =>
-        _validatorMock.Setup(v => v.ValidateAsync(dto, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ValidationResult());
 }

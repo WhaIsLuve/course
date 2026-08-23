@@ -91,7 +91,7 @@ public sealed class DetachLocationHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsyncWhenSaveFailsShouldReturnFailure()
+    public async Task HandleAsyncWhenDataIsValidShouldPrepareChanges()
     {
         var departmentId = Guid.CreateVersion7();
         var locationId = Guid.CreateVersion7();
@@ -99,13 +99,9 @@ public sealed class DetachLocationHandlerTests
         SetupEntities(departmentId, locationId);
         _departmentRepositoryMock.Setup(r => r.GetDepartmentLocation(departmentId, locationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(link);
-        var expectedError = Error.Failure("database.save.error", "Save failed");
-        _departmentRepositoryMock.Setup(r => r.Save(It.IsAny<CancellationToken>())).ReturnsAsync(expectedError);
-
         var result = await _sut.HandleAsync(new DetachLocationCommand(departmentId, locationId));
 
-        Assert.True(result.IsFailure);
-        Assert.Equal(expectedError, result.Error);
+        Assert.True(result.IsSuccess);
         _departmentRepositoryMock.Verify(r => r.RemoveDepartmentLocation(link), Times.Once);
     }
 
