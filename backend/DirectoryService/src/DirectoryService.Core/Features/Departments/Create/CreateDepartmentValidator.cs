@@ -1,12 +1,12 @@
-﻿using DirectoryService.Contracts.Departments;
+using DirectoryService.Contracts.Departments;
 using DirectoryService.Core.Validations;
 using DirectoryService.Domain.Departments;
 using DirectoryService.SharedKernel.Errors;
 using FluentValidation;
 
-namespace DirectoryService.Core.Departments;
+namespace DirectoryService.Core.Features.Departments.Create;
 
-public class CreateDepartmentValidator : AbstractValidator<CreateDepartmentDto>
+public sealed class CreateDepartmentValidator : AbstractValidator<CreateDepartmentDto>
 {
     public CreateDepartmentValidator()
     {
