@@ -35,6 +35,7 @@ public sealed class EndpointResult : IResult, IEndpointMetadataProvider
 
         // Common errors
         builder.Metadata.Add(new ProducesResponseTypeMetadata(400, typeof(Envelope), ["application/json"]));
+        builder.Metadata.Add(new ProducesResponseTypeMetadata(404, typeof(Envelope), ["application/json"]));
         builder.Metadata.Add(new ProducesResponseTypeMetadata(500, typeof(Envelope), ["application/json"]));
     }
 

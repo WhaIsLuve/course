@@ -16,6 +16,7 @@ public static class ServiceCollectionExtensions
 		services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 		services.AddScoped<IPositionRepository, PositionRepository>();
 		services.AddScoped<ITransactionManager, TransactionManager>();
+		services.AddScoped<IReadDbContext>(provider => provider.GetRequiredService<AppDbContext>());
 		services.AddSingleton<IDbConnectionFactory, NpgsqlDbConnectionFactory>();
 		return services;
 	}
