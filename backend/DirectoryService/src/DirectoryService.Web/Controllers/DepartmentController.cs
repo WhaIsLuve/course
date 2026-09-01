@@ -8,6 +8,7 @@ using DirectoryService.Core.Features.Departments.Create;
 using DirectoryService.Core.Features.Departments.Delete;
 using DirectoryService.Core.Features.Departments.DetachLocation;
 using DirectoryService.Core.Features.Departments.DetachPosition;
+using DirectoryService.Core.Features.Departments.GetById;
 using DirectoryService.Core.Features.Departments.Rename;
 using DirectoryService.SharedKernel.Envelopes;
 using DirectoryService.SharedKernel.Errors;
@@ -27,7 +28,8 @@ public sealed class DepartmentController(
     ICommandHandler<DetachLocationCommand, UnitResult<Error>> detachLocationHandler,
     ICommandHandler<DeleteDepartmentCommand, UnitResult<Error>> deleteDepartmentHandler,
     ICommandHandler<AttachPositionCommand, UnitResult<Error>> attachPositionHandler,
-    ICommandHandler<DetachPositionCommand, UnitResult<Error>> detachPositionHandler) : ControllerBase
+    ICommandHandler<DetachPositionCommand, UnitResult<Error>> detachPositionHandler,
+    IQueryHandler<GetDepartmentByIdQuery, Result<DepartmentResponse, Error>> getDepartmentByIdHandler) : ControllerBase
 #pragma warning restore CA1515
 #pragma warning restore S6960
 {
@@ -45,6 +47,8 @@ public sealed class DepartmentController(
         attachPositionHandler ?? throw new ArgumentNullException(nameof(attachPositionHandler));
     private readonly ICommandHandler<DetachPositionCommand, UnitResult<Error>> _detachPositionHandler =
         detachPositionHandler ?? throw new ArgumentNullException(nameof(detachPositionHandler));
+    private readonly IQueryHandler<GetDepartmentByIdQuery, Result<DepartmentResponse, Error>> _getDepartmentByIdHandler =
+        getDepartmentByIdHandler ?? throw new ArgumentNullException(nameof(getDepartmentByIdHandler));
 
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Envelope))]
@@ -68,9 +72,12 @@ public sealed class DepartmentController(
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<IResult> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Envelope<DepartmentResponse>))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(Envelope))]
+    public async Task<EndpointResult<DepartmentResponse>> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-        return TypedResults.Ok();
+        return await _getDepartmentByIdHandler.HandleAsync(new GetDepartmentByIdQuery(id), cancellationToken);
     }
 
     [HttpPatch("{id:guid}")]

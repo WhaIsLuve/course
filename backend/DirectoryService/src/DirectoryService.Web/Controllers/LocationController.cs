@@ -4,6 +4,7 @@ using DirectoryService.Contracts.Locations;
 using DirectoryService.Core.Abstractions;
 using DirectoryService.Core.Features.Locations.Create;
 using DirectoryService.Core.Features.Locations.Delete;
+using DirectoryService.Core.Features.Locations.GetById;
 using DirectoryService.Core.Features.Locations.Update;
 using DirectoryService.SharedKernel.Envelopes;
 using DirectoryService.SharedKernel.Errors;
@@ -19,7 +20,8 @@ namespace DirectoryService.Web.Controllers;
 public sealed class LocationController(
     ICommandHandler<CreateLocationCommand, Result<Guid, Error>> createLocationHandler,
     ICommandHandler<UpdateLocationCommand, UnitResult<Error>> updateLocationHandler,
-    ICommandHandler<DeleteLocationCommand, UnitResult<Error>> deleteLocationHandler) : ControllerBase
+    ICommandHandler<DeleteLocationCommand, UnitResult<Error>> deleteLocationHandler,
+    IQueryHandler<GetLocationByIdQuery, Result<LocationResponse, Error>> getLocationByIdHandler) : ControllerBase
 #pragma warning restore CA1515
 #pragma warning restore S6960
 {
@@ -29,6 +31,8 @@ public sealed class LocationController(
         updateLocationHandler ?? throw new ArgumentNullException(nameof(updateLocationHandler));
     private readonly ICommandHandler<DeleteLocationCommand, UnitResult<Error>> _deleteLocationHandler =
         deleteLocationHandler ?? throw new ArgumentNullException(nameof(deleteLocationHandler));
+    private readonly IQueryHandler<GetLocationByIdQuery, Result<LocationResponse, Error>> _getLocationByIdHandler =
+        getLocationByIdHandler ?? throw new ArgumentNullException(nameof(getLocationByIdHandler));
 
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Envelope))]
@@ -52,9 +56,12 @@ public sealed class LocationController(
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<IResult> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Envelope<LocationResponse>))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(Envelope))]
+    public async Task<EndpointResult<LocationResponse>> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
     {
-        return TypedResults.Ok();
+        return await _getLocationByIdHandler.HandleAsync(new GetLocationByIdQuery(id), cancellationToken);
     }
 
     [HttpPatch("{id:guid}")]

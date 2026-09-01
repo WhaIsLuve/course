@@ -1,3 +1,11 @@
-﻿namespace DirectoryService.Contracts.Locations;
+namespace DirectoryService.Contracts.Locations;
 
-public record LocationResponse(Guid Id, string Name, AddressResponse Address, DateTime CreatedAt, DateTime? UpdatedAt);
+public sealed record LocationResponse(
+    Guid Id,
+    string Name,
+    string Country,
+    string City,
+    string? Street,
+    string? Building,
+    DateTime CreatedAt,
+    DateTime? UpdatedAt);
