@@ -5,6 +5,7 @@ using DirectoryService.Core.Abstractions;
 using DirectoryService.Core.Features.Locations.Create;
 using DirectoryService.Core.Features.Locations.Delete;
 using DirectoryService.Core.Features.Locations.GetById;
+using DirectoryService.Core.Features.Locations.Top;
 using DirectoryService.Core.Features.Locations.Update;
 using DirectoryService.SharedKernel.Envelopes;
 using DirectoryService.SharedKernel.Errors;
@@ -21,18 +22,25 @@ public sealed class LocationController(
     ICommandHandler<CreateLocationCommand, Result<Guid, Error>> createLocationHandler,
     ICommandHandler<UpdateLocationCommand, UnitResult<Error>> updateLocationHandler,
     ICommandHandler<DeleteLocationCommand, UnitResult<Error>> deleteLocationHandler,
-    IQueryHandler<GetLocationByIdQuery, Result<LocationResponse, Error>> getLocationByIdHandler) : ControllerBase
+    IQueryHandler<GetLocationByIdQuery, Result<LocationResponse, Error>> getLocationByIdHandler,
+    IQueryHandler<GetTopLocationQuery, Result<LocationTopResponse[], Error>> getTopLocationHandler) : ControllerBase
 #pragma warning restore CA1515
 #pragma warning restore S6960
 {
     private readonly ICommandHandler<CreateLocationCommand, Result<Guid, Error>> _createLocationHandler =
         createLocationHandler ?? throw new ArgumentNullException(nameof(createLocationHandler));
+
     private readonly ICommandHandler<UpdateLocationCommand, UnitResult<Error>> _updateLocationHandler =
         updateLocationHandler ?? throw new ArgumentNullException(nameof(updateLocationHandler));
+
     private readonly ICommandHandler<DeleteLocationCommand, UnitResult<Error>> _deleteLocationHandler =
         deleteLocationHandler ?? throw new ArgumentNullException(nameof(deleteLocationHandler));
+
     private readonly IQueryHandler<GetLocationByIdQuery, Result<LocationResponse, Error>> _getLocationByIdHandler =
         getLocationByIdHandler ?? throw new ArgumentNullException(nameof(getLocationByIdHandler));
+
+    private readonly IQueryHandler<GetTopLocationQuery, Result<LocationTopResponse[], Error>> _getTopLocationHandler =
+        getTopLocationHandler ?? throw new ArgumentNullException(nameof(getTopLocationHandler));
 
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Envelope))]
@@ -59,9 +67,18 @@ public sealed class LocationController(
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Envelope<LocationResponse>))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(Envelope))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(Envelope))]
-    public async Task<EndpointResult<LocationResponse>> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
+    public async Task<EndpointResult<LocationResponse>> GetById([FromRoute] Guid id,
+        CancellationToken cancellationToken)
     {
         return await _getLocationByIdHandler.HandleAsync(new GetLocationByIdQuery(id), cancellationToken);
+    }
+
+    [HttpGet("top")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Envelope<LocationTopResponse[]>))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(Envelope))]
+    public async Task<EndpointResult<LocationTopResponse[]>> GetTop(CancellationToken cancellationToken)
+    {
+        return await _getTopLocationHandler.HandleAsync(new GetTopLocationQuery(), cancellationToken);
     }
 
     [HttpPatch("{id:guid}")]

@@ -10,21 +10,22 @@ using Microsoft.EntityFrameworkCore;
 namespace DirectoryService.Infrastructure.Postgres;
 
 public partial class AppDbContext(DbContextOptions<AppDbContext> options)
-	: DbContext(options), IReadDbContext
+    : DbContext(options), IReadDbContext
 {
-	public DbSet<Location> Locations => Set<Location>();
-	public DbSet<Department> Departments => Set<Department>();
-	public DbSet<DepartmentLocation> DepartmentLocations => Set<DepartmentLocation>();
-	public DbSet<Position> Positions => Set<Position>();
-	public DbSet<DepartmentPosition> DepartmentPositions => Set<DepartmentPosition>();
+    public DbSet<Location> Locations => Set<Location>();
+    public DbSet<Department> Departments => Set<Department>();
+    public DbSet<DepartmentLocation> DepartmentLocations => Set<DepartmentLocation>();
+    public DbSet<Position> Positions => Set<Position>();
+    public DbSet<DepartmentPosition> DepartmentPositions => Set<DepartmentPosition>();
 
-	IQueryable<Location> IReadDbContext.Locations => Locations.AsNoTracking();
+    IQueryable<Location> IReadDbContext.Locations => Locations.AsNoTracking();
 
-	IQueryable<Department> IReadDbContext.Departments => Departments.AsNoTracking();
+    IQueryable<Department> IReadDbContext.Departments => Departments.AsNoTracking();
 
-	protected override void OnModelCreating(ModelBuilder modelBuilder)
-	{
-		modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
-	}
+    IQueryable<DepartmentLocation> IReadDbContext.DepartmentLocations => DepartmentLocations.AsNoTracking();
 
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+    }
 }

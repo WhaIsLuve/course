@@ -2,14 +2,15 @@
     <ItemGroup>
         <ProjectReference Include="../DirectoryService.Contracts/DirectoryService.Contracts.csproj"/>
         <ProjectReference Include="../DirectoryService.Domain/DirectoryService.Domain.csproj"/>
-        <ProjectReference Include="..\DirectoryService.SharedKernel\DirectoryService.SharedKernel.csproj" />
+        <ProjectReference Include="..\DirectoryService.SharedKernel\DirectoryService.SharedKernel.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore"/>
         <PackageReference Include="FluentValidation"/>
         <PackageReference Include="FluentValidation.DependencyInjectionExtensions"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
         <PackageReference Include="Scrutor"/>
+        <PackageReference Include="Dapper"/>
     </ItemGroup>
 </Project>
