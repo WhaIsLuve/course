@@ -1,5 +1,6 @@
 using CSharpFunctionalExtensions;
 using IResult = Microsoft.AspNetCore.Http.IResult;
+using DirectoryService.Contracts.Common;
 using DirectoryService.Contracts.Departments;
 using DirectoryService.Core.Abstractions;
 using DirectoryService.Core.Features.Departments.AttachLocation;
@@ -9,6 +10,7 @@ using DirectoryService.Core.Features.Departments.Delete;
 using DirectoryService.Core.Features.Departments.DetachLocation;
 using DirectoryService.Core.Features.Departments.DetachPosition;
 using DirectoryService.Core.Features.Departments.GetById;
+using DirectoryService.Core.Features.Departments.GetList;
 using DirectoryService.Core.Features.Departments.Rename;
 using DirectoryService.SharedKernel.Envelopes;
 using DirectoryService.SharedKernel.Errors;
@@ -29,7 +31,8 @@ public sealed class DepartmentController(
     ICommandHandler<DeleteDepartmentCommand, UnitResult<Error>> deleteDepartmentHandler,
     ICommandHandler<AttachPositionCommand, UnitResult<Error>> attachPositionHandler,
     ICommandHandler<DetachPositionCommand, UnitResult<Error>> detachPositionHandler,
-    IQueryHandler<GetDepartmentByIdQuery, Result<DepartmentResponse, Error>> getDepartmentByIdHandler) : ControllerBase
+    IQueryHandler<GetDepartmentByIdQuery, Result<DepartmentResponse, Error>> getDepartmentByIdHandler,
+    IQueryHandler<GetDepartmentsQuery, Result<PagedResult<DepartmentListItemDto>, Error>> getDepartmentsHandler) : ControllerBase
 #pragma warning restore CA1515
 #pragma warning restore S6960
 {
@@ -49,6 +52,8 @@ public sealed class DepartmentController(
         detachPositionHandler ?? throw new ArgumentNullException(nameof(detachPositionHandler));
     private readonly IQueryHandler<GetDepartmentByIdQuery, Result<DepartmentResponse, Error>> _getDepartmentByIdHandler =
         getDepartmentByIdHandler ?? throw new ArgumentNullException(nameof(getDepartmentByIdHandler));
+    private readonly IQueryHandler<GetDepartmentsQuery, Result<PagedResult<DepartmentListItemDto>, Error>> _getDepartmentsHandler =
+        getDepartmentsHandler ?? throw new ArgumentNullException(nameof(getDepartmentsHandler));
 
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Envelope))]
@@ -66,9 +71,20 @@ public sealed class DepartmentController(
     }
 
     [HttpGet]
-    public async Task<IResult> Get(CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Envelope<PagedResult<DepartmentListItemDto>>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(Envelope))]
+    public async Task<EndpointResult<PagedResult<DepartmentListItemDto>>> Get(
+        [FromQuery] string? search,
+        [FromQuery] string? sortBy,
+        [FromQuery] string? sortDir,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
     {
-        return TypedResults.Ok();
+        return await _getDepartmentsHandler.HandleAsync(
+            new GetDepartmentsQuery(search, sortBy, sortDir, page, pageSize),
+            cancellationToken);
     }
 
     [HttpGet("{id:guid}")]
