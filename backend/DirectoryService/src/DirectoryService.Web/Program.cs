@@ -84,3 +84,12 @@ finally
 {
 	await Log.CloseAndFlushAsync();
 }
+
+#pragma warning disable CA1515, S1118
+public partial class Program
+{
+    protected Program()
+    {
+    }
+}
+#pragma warning restore CA1515, S1118

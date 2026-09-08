@@ -12,5 +12,6 @@
     </Folder>
     <Folder Name="/src/tests/">
         <Project Path="src/DirectoryService.UnitTests/DirectoryService.UnitTests.csproj" />
+        <Project Path="src/DirectoryService.IntegrationTests/DirectoryService.IntegrationTests.csproj" />
     </Folder>
 </Solution>
