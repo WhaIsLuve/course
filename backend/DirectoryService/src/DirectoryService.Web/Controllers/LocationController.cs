@@ -1,10 +1,12 @@
 using CSharpFunctionalExtensions;
 using IResult = Microsoft.AspNetCore.Http.IResult;
+using DirectoryService.Contracts.Common;
 using DirectoryService.Contracts.Locations;
 using DirectoryService.Core.Abstractions;
 using DirectoryService.Core.Features.Locations.Create;
 using DirectoryService.Core.Features.Locations.Delete;
 using DirectoryService.Core.Features.Locations.GetById;
+using DirectoryService.Core.Features.Locations.GetList;
 using DirectoryService.Core.Features.Locations.Top;
 using DirectoryService.Core.Features.Locations.Update;
 using DirectoryService.SharedKernel.Envelopes;
@@ -23,7 +25,8 @@ public sealed class LocationController(
     ICommandHandler<UpdateLocationCommand, UnitResult<Error>> updateLocationHandler,
     ICommandHandler<DeleteLocationCommand, UnitResult<Error>> deleteLocationHandler,
     IQueryHandler<GetLocationByIdQuery, Result<LocationResponse, Error>> getLocationByIdHandler,
-    IQueryHandler<GetTopLocationQuery, Result<LocationTopResponse[], Error>> getTopLocationHandler) : ControllerBase
+    IQueryHandler<GetTopLocationQuery, Result<LocationTopResponse[], Error>> getTopLocationHandler,
+    IQueryHandler<GetLocationsQuery, Result<PagedResult<LocationListItemDto>, Error>> getLocationsHandler) : ControllerBase
 #pragma warning restore CA1515
 #pragma warning restore S6960
 {
@@ -42,6 +45,9 @@ public sealed class LocationController(
     private readonly IQueryHandler<GetTopLocationQuery, Result<LocationTopResponse[], Error>> _getTopLocationHandler =
         getTopLocationHandler ?? throw new ArgumentNullException(nameof(getTopLocationHandler));
 
+    private readonly IQueryHandler<GetLocationsQuery, Result<PagedResult<LocationListItemDto>, Error>> _getLocationsHandler =
+        getLocationsHandler ?? throw new ArgumentNullException(nameof(getLocationsHandler));
+
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Envelope))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(Envelope))]
@@ -58,9 +64,21 @@ public sealed class LocationController(
     }
 
     [HttpGet]
-    public async Task<IResult> Get(CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Envelope<PagedResult<LocationListItemDto>>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(Envelope))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(Envelope))]
+    public async Task<EndpointResult<PagedResult<LocationListItemDto>>> Get(
+        [FromQuery] string? search,
+        [FromQuery] int? minDepartmentCount,
+        [FromQuery] string? sortBy,
+        [FromQuery] string? sortDir,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
     {
-        return TypedResults.Ok();
+        return await _getLocationsHandler.HandleAsync(
+            new GetLocationsQuery(search, minDepartmentCount, sortBy, sortDir, page, pageSize),
+            cancellationToken);
     }
 
     [HttpGet("{id:guid}")]
