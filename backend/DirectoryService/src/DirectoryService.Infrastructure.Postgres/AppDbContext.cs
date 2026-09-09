@@ -1,4 +1,3 @@
-﻿using CSharpFunctionalExtensions;
 using DirectoryService.Domain.DepartmentLocations;
 using DirectoryService.Domain.Departments;
 using DirectoryService.Domain.Locations;
@@ -22,7 +21,17 @@ public partial class AppDbContext(DbContextOptions<AppDbContext> options)
 
     IQueryable<Department> IReadDbContext.Departments => Departments.AsNoTracking();
 
-    IQueryable<DepartmentLocation> IReadDbContext.DepartmentLocations => DepartmentLocations.AsNoTracking();
+    IQueryable<Position> IReadDbContext.Positions => Positions.AsNoTracking();
+
+    IQueryable<DepartmentLocation> IReadDbContext.DepartmentLocations => DepartmentLocations
+        .AsNoTracking()
+        .Where(link => Departments.Any(department => department.Id == link.DepartmentId)
+            && Locations.Any(location => location.Id == link.LocationId));
+
+    IQueryable<DepartmentPosition> IReadDbContext.DepartmentPositions => DepartmentPositions
+        .AsNoTracking()
+        .Where(link => Departments.Any(department => department.Id == link.DepartmentId)
+            && Positions.Any(position => position.Id == link.PositionId));
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

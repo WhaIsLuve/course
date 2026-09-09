@@ -8,8 +8,6 @@ public interface IPositionRepository
 {
     void Add(Position position);
 
-    void Remove(Position position);
-
     ValueTask<Result<Position, Error>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<bool> ExistWithSameNameAsync(string name, CancellationToken cancellationToken = default);

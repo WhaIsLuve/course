@@ -17,6 +17,20 @@ public sealed class PositionTests
     }
 
     [Fact]
+    public void DeleteSetsDeletedState()
+    {
+        var createdAt = DateTime.UtcNow.AddMinutes(-1);
+        var position = Position.Create(Guid.CreateVersion7(), PositionName.Create("Developer").Value, createdAt).Value;
+        var deletedAt = DateTime.UtcNow;
+
+        var result = position.Delete(deletedAt);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(position.IsDeleted);
+        Assert.Equal(deletedAt, position.DeletedAt);
+    }
+
+    [Fact]
     public void UpdateChangesNameAndTimestamp()
     {
         var createdAt = DateTime.UtcNow.AddMinutes(-1);

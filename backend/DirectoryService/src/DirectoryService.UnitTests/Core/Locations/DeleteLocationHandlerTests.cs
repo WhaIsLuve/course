@@ -16,11 +16,11 @@ public sealed class DeleteLocationHandlerTests
     public DeleteLocationHandlerTests()
     {
         _logger.Setup(x => x.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
-        _sut = new DeleteLocationHandler(_repository.Object, _logger.Object);
+        _sut = new DeleteLocationHandler(_repository.Object, TimeProvider.System, _logger.Object);
     }
 
     [Fact]
-    public async Task HandleAsyncWithUnlinkedLocationRemovesIt()
+    public async Task HandleAsyncWithUnlinkedLocationSoftDeletesIt()
     {
         var id = Guid.CreateVersion7();
         var location = LocationHandlerTestData.CreateLocation(id);
@@ -30,7 +30,8 @@ public sealed class DeleteLocationHandlerTests
         var result = await _sut.HandleAsync(new DeleteLocationCommand(id));
 
         Assert.True(result.IsSuccess);
-        _repository.Verify(x => x.Remove(location), Times.Once);
+        Assert.True(location.IsDeleted);
+        Assert.NotNull(location.DeletedAt);
     }
 
     [Fact]
@@ -45,7 +46,6 @@ public sealed class DeleteLocationHandlerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(ErrorType.Conflict, result.Error.Type);
-        _repository.Verify(x => x.Remove(It.IsAny<Location>()), Times.Never);
     }
 
     [Fact]

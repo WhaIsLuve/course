@@ -1,7 +1,9 @@
 using System.Globalization;
 using DirectoryService.Core;
 using DirectoryService.Infrastructure.Postgres;
+using DirectoryService.Infrastructure.Postgres.BackgroundCleanup;
 using DirectoryService.Web.Extensions;
+using DirectoryService.Web.BackgroundCleanup;
 using DirectoryService.Web.Middlewares;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
@@ -25,6 +27,8 @@ try
 	builder.Services.AddControllers();
 	builder.Services.AddCore();
 	builder.Services.AddInfrastructure();
+	builder.Services.AddSoftDeleteCleanup(builder.Configuration);
+	builder.Services.AddHostedService<SoftDeleteCleanupBackgroundService>();
 	builder.Services.AddHealthChecks();
 	builder.Services.AddDbContext<AppDbContext>(options => options
 		.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
@@ -84,12 +88,3 @@ finally
 {
 	await Log.CloseAndFlushAsync();
 }
-
-#pragma warning disable CA1515, S1118
-public partial class Program
-{
-    protected Program()
-    {
-    }
-}
-#pragma warning restore CA1515, S1118

@@ -14,15 +14,32 @@ public sealed class DeletePositionIntegrationTests
     }
 
     [Fact]
-    public async Task DeleteUnlinkedPositionRemovesRow()
+    public async Task DeleteUnlinkedPositionSoftDeletesRowAndHidesIt()
     {
         var positionId = await CreatePositionAsync("Position to delete");
 
         using var response = await Client.DeleteAsync(new Uri($"api/v1/positions/{positionId}", UriKind.Relative));
 
         await response.AssertSuccessAsync();
-        var exists = await QueryDatabaseAsync(db => db.Positions.AnyAsync(x => x.Id == positionId));
-        Assert.False(exists);
+        var exists = await QueryDatabaseAsync(db => db.Positions
+            .IgnoreQueryFilters()
+            .AnyAsync(x => x.Id == positionId));
+        Assert.True(exists);
+        var position = await QueryDatabaseAsync(db => db.Positions
+            .IgnoreQueryFilters()
+            .SingleAsync(x => x.Id == positionId));
+        Assert.True(position.IsDeleted);
+        Assert.NotNull(position.DeletedAt);
+
+        using var getResponse = await Client.GetAsync(new Uri($"api/v1/positions/{positionId}", UriKind.Relative));
+        await getResponse.AssertErrorAsync(HttpStatusCode.NotFound, "position.not.found");
+
+        using var listResponse = await Client.GetAsync(new Uri("api/v1/positions", UriKind.Relative));
+        await listResponse.AssertSuccessAsync();
+        using var listDocument = await listResponse.ReadJsonDocumentAsync();
+        Assert.DoesNotContain(
+            listDocument.RootElement.GetProperty("result").GetProperty("items").EnumerateArray(),
+            item => item.GetProperty("id").GetGuid() == positionId);
     }
 
     [Fact]
@@ -49,5 +66,18 @@ public sealed class DeletePositionIntegrationTests
             new Uri($"api/v1/positions/{Guid.NewGuid()}", UriKind.Relative));
 
         await response.AssertErrorAsync(HttpStatusCode.NotFound, "position.not.found");
+    }
+
+    [Fact]
+    public async Task DeletedPositionNameCanBeReused()
+    {
+        var positionId = await CreatePositionAsync("Reusable position");
+
+        using var deleteResponse = await Client.DeleteAsync(new Uri($"api/v1/positions/{positionId}", UriKind.Relative));
+        await deleteResponse.AssertSuccessAsync();
+
+        var replacementId = await CreatePositionAsync("Reusable position");
+
+        Assert.NotEqual(positionId, replacementId);
     }
 }

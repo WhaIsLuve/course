@@ -9,11 +9,13 @@ namespace DirectoryService.Core.Features.Locations.Delete;
 
 public sealed class DeleteLocationHandler(
     ILocationRepository locationRepository,
+    TimeProvider timeProvider,
     ILogger<DeleteLocationHandler> logger)
     : ICommandHandler<DeleteLocationCommand, UnitResult<Error>>
 {
     private readonly ILocationRepository _locationRepository =
         locationRepository ?? throw new ArgumentNullException(nameof(locationRepository));
+    private readonly TimeProvider _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     private readonly ILogger<DeleteLocationHandler> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     public async Task<UnitResult<Error>> HandleAsync(DeleteLocationCommand command,
@@ -29,7 +31,10 @@ public sealed class DeleteLocationHandler(
                 "Нельзя удалить локацию, привязанную к подразделению");
         }
 
-        _locationRepository.Remove(location.Value);
+        var deleteResult = location.Value.Delete(_timeProvider.GetUtcNow().UtcDateTime);
+        if (deleteResult.IsFailure)
+            return deleteResult.Error;
+
         _logger.LocationDeleted(command.LocationId);
         return UnitResult.Success<Error>();
     }

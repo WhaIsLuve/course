@@ -63,7 +63,8 @@ public sealed class DirectoryServiceWebApplicationFactory : WebApplicationFactor
         {
             configuration.AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
             {
-                ["ConnectionStrings:Postgres"] = _postgres.GetConnectionString()
+                ["ConnectionStrings:Postgres"] = _postgres.GetConnectionString(),
+                ["SoftDeleteCleanup:BatchSize"] = "2"
             });
         });
     }

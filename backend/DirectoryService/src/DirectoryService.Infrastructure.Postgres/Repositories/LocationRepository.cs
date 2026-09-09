@@ -15,14 +15,9 @@ internal sealed class LocationRepository(AppDbContext dbContext) : ILocationRepo
 		_dbContext.Locations.Add(location);
 	}
 
-	public void Remove(Location location)
-	{
-		_dbContext.Locations.Remove(location);
-	}
-
 	public async ValueTask<Result<Location, Error>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
 	{
-		var location = await _dbContext.Locations.FindAsync([id], cancellationToken);
+		var location = await _dbContext.Locations.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 		return location.ToResult(Error.NotFound("location.not.found", "Не найдена локация"));
 	}
 
