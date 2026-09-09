@@ -19,11 +19,6 @@ internal sealed class DepartmentRepository(AppDbContext dbContext)
 		_dbContext.Departments.Add(department);
 	}
 
-	public void RemoveDepartment(Department department)
-	{
-		_dbContext.Departments.Remove(department);
-	}
-
 	public void AddDepartmentLocations(IReadOnlyList<DepartmentLocation> departmentLocations)
 	{
 		_dbContext.DepartmentLocations.AddRange(departmentLocations);
@@ -81,9 +76,14 @@ internal sealed class DepartmentRepository(AppDbContext dbContext)
 	public async ValueTask<Result<Department, Error>> GetByIdAsync(Guid id,
 		CancellationToken cancellationToken = default)
 	{
-		var department = await _dbContext.Departments.FindAsync([id], cancellationToken);
+		var department = await _dbContext.Departments.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 
 		return department.ToResult(Error.NotFound("department.not.found", $"Департамент с идентификатором {id} не найден"));
+	}
+
+	public Task<bool> HasActiveChildrenAsync(Guid departmentId, CancellationToken cancellationToken = default)
+	{
+		return _dbContext.Departments.AnyAsync(x => x.ParentId == departmentId, cancellationToken);
 	}
 
 }

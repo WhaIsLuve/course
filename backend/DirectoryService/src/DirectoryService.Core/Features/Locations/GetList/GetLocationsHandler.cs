@@ -66,8 +66,8 @@ public sealed class GetLocationsHandler(IDbConnectionFactory dbConnectionFactory
                     l.building AS "Building",
                     l.created_at AS "CreatedAt",
                     COUNT(DISTINCT dl.department_id)::int AS "DepartmentCount"
-                FROM locations AS l
-                LEFT JOIN department_locations AS dl ON dl.location_id = l.id
+                FROM active_locations AS l
+                LEFT JOIN active_department_locations AS dl ON dl.location_id = l.id
                 WHERE @SearchPattern IS NULL
                    OR l.name ILIKE @SearchPattern ESCAPE '~'
                 GROUP BY l.id, l.name, l.country, l.city, l.street, l.building, l.created_at

@@ -16,11 +16,11 @@ public sealed class DeletePositionHandlerTests
     public DeletePositionHandlerTests()
     {
         _logger.Setup(x => x.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
-        _sut = new DeletePositionHandler(_repository.Object, _logger.Object);
+        _sut = new DeletePositionHandler(_repository.Object, TimeProvider.System, _logger.Object);
     }
 
     [Fact]
-    public async Task HandleAsyncWithUnlinkedPositionRemovesIt()
+    public async Task HandleAsyncWithUnlinkedPositionSoftDeletesIt()
     {
         var id = Guid.CreateVersion7();
         var position = PositionHandlerTestData.CreatePosition(id);
@@ -30,7 +30,8 @@ public sealed class DeletePositionHandlerTests
         var result = await _sut.HandleAsync(new DeletePositionCommand(id));
 
         Assert.True(result.IsSuccess);
-        _repository.Verify(x => x.Remove(position), Times.Once);
+        Assert.True(position.IsDeleted);
+        Assert.NotNull(position.DeletedAt);
     }
 
     [Fact]
@@ -45,7 +46,6 @@ public sealed class DeletePositionHandlerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(ErrorType.Conflict, result.Error.Type);
-        _repository.Verify(x => x.Remove(It.IsAny<Position>()), Times.Never);
     }
 
     [Fact]

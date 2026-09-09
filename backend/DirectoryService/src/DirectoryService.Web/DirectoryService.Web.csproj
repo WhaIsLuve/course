@@ -22,4 +22,9 @@
         <PackageReference Include="Serilog.Sinks.Debug" />
         <PackageReference Include="Serilog.Sinks.Seq" />
     </ItemGroup>
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>DirectoryService.IntegrationTests</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
 </Project>

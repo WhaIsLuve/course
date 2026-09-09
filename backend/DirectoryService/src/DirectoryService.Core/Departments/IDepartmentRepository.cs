@@ -9,7 +9,6 @@ namespace DirectoryService.Core.Departments;
 public interface IDepartmentRepository
 {
 	void AddDepartment(Department department);
-	void RemoveDepartment(Department department);
 	void AddDepartmentLocations(IReadOnlyList<DepartmentLocation> departmentLocations);
 	void RemoveDepartmentLocation(DepartmentLocation departmentLocation);
 	void AddDepartmentPosition(DepartmentPosition departmentPosition);
@@ -27,5 +26,7 @@ public interface IDepartmentRepository
 	Task<Result<DepartmentPosition, Error>> GetDepartmentPosition(Guid departmentId, Guid positionId,
 		CancellationToken cancellationToken = default);
 
-	ValueTask<Result<Department, Error>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    ValueTask<Result<Department, Error>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<bool> HasActiveChildrenAsync(Guid departmentId, CancellationToken cancellationToken = default);
 }

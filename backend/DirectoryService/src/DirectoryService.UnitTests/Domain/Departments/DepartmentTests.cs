@@ -18,6 +18,21 @@ public class DepartmentTests
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value.ParentId);
         Assert.Equal("/sales", result.Value.Path.Value);
+        Assert.False(result.Value.IsDeleted);
+        Assert.Null(result.Value.DeletedAt);
+    }
+
+    [Fact]
+    public void DeleteSetsDeletedState()
+    {
+        var department = Department.Create(Guid.NewGuid(), _validName, _validSlug, null, _validDate).Value;
+        var deletedAt = _validDate.AddHours(1);
+
+        var result = department.Delete(deletedAt);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(department.IsDeleted);
+        Assert.Equal(deletedAt, department.DeletedAt);
     }
 
     [Fact]

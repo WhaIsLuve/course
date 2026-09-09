@@ -3,7 +3,7 @@ using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.Domain.Positions;
 
-public sealed class Position : Entity<Guid>
+public sealed class Position : Entity<Guid>, ISoftDeletable
 {
     private Position(Guid id, PositionName name, DateTime createdAt) : base(id)
     {
@@ -20,6 +20,10 @@ public sealed class Position : Entity<Guid>
     public DateTime CreatedAt { get; }
 
     public DateTime? UpdatedAt { get; private set; }
+
+    public bool IsDeleted { get; private set; }
+
+    public DateTime? DeletedAt { get; private set; }
 
     public static Result<Position, Error> Create(Guid id, PositionName name, DateTime createdAt)
     {
@@ -46,6 +50,19 @@ public sealed class Position : Entity<Guid>
         Name = name;
         UpdatedAt = updatedAt;
 
+        return UnitResult.Success<Error>();
+    }
+
+    public UnitResult<Error> Delete(DateTime deletedAt)
+    {
+        if (deletedAt == default || deletedAt < CreatedAt)
+            return UnitResult.Failure(Error.Validation("position.deletedAt.invalid", "DeletedAt is invalid"));
+
+        if (IsDeleted)
+            return UnitResult.Failure(Error.Conflict("position.already.deleted", "Должность уже удалена"));
+
+        IsDeleted = true;
+        DeletedAt = deletedAt;
         return UnitResult.Success<Error>();
     }
 }

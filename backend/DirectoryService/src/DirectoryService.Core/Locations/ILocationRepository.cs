@@ -7,8 +7,6 @@ namespace DirectoryService.Core.Locations;
 public interface ILocationRepository
 {
 	void Add(Location location);
-	void Remove(Location location);
-
 	ValueTask<Result<Location, Error>> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
 	Task<Result<IReadOnlyList<Location>, Error>> GetByIdsAsync(IReadOnlyList<Guid> locationIds,

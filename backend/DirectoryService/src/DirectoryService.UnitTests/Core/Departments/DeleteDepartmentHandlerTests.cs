@@ -15,11 +15,11 @@ public sealed class DeleteDepartmentHandlerTests
     public DeleteDepartmentHandlerTests()
     {
         _logger.Setup(x => x.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
-        _sut = new DeleteDepartmentHandler(_repository.Object, _logger.Object);
+        _sut = new DeleteDepartmentHandler(_repository.Object, TimeProvider.System, _logger.Object);
     }
 
     [Fact]
-    public async Task HandleAsyncWithExistingDepartmentRemovesIt()
+    public async Task HandleAsyncWithExistingDepartmentSoftDeletesIt()
     {
         var id = Guid.CreateVersion7();
         var department = DepartmentHandlerTestData.CreateDepartment(id);
@@ -28,7 +28,8 @@ public sealed class DeleteDepartmentHandlerTests
         var result = await _sut.HandleAsync(new DeleteDepartmentCommand(id));
 
         Assert.True(result.IsSuccess);
-        _repository.Verify(x => x.RemoveDepartment(department), Times.Once);
+        Assert.True(department.IsDeleted);
+        Assert.NotNull(department.DeletedAt);
     }
 
     [Fact]
@@ -42,5 +43,21 @@ public sealed class DeleteDepartmentHandlerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(ErrorType.NotFound, result.Error.Type);
+    }
+
+    [Fact]
+    public async Task HandleAsyncWithActiveChildrenReturnsConflict()
+    {
+        var id = Guid.CreateVersion7();
+        _repository.Setup(x => x.GetByIdAsync(id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(DepartmentHandlerTestData.CreateDepartment(id));
+        _repository.Setup(x => x.HasActiveChildrenAsync(id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var result = await _sut.HandleAsync(new DeleteDepartmentCommand(id));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Conflict, result.Error.Type);
+        Assert.Equal("department.children.exist", result.Error.Messages[0].Code);
     }
 }

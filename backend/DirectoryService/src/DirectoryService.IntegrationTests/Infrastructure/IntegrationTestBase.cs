@@ -37,9 +37,10 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     protected async Task<Guid> CreateDepartmentAsync(
         string name = "Test department",
         string slug = "test-department",
-        IReadOnlyList<Guid>? locationIds = null)
+        IReadOnlyList<Guid>? locationIds = null,
+        Guid? parentId = null)
     {
-        var dto = new CreateDepartmentDto(name, slug, null, locationIds ?? []);
+        var dto = new CreateDepartmentDto(name, slug, parentId, locationIds ?? []);
         using var content = Json(dto);
         using var response = await Client.PostAsync(new Uri("api/v1/departments", UriKind.Relative), content);
         return await response.AssertCreatedGuidAsync();

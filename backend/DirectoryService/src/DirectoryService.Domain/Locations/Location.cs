@@ -3,7 +3,7 @@ using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.Domain.Locations;
 
-public sealed class Location : Entity<Guid>
+public sealed class Location : Entity<Guid>, ISoftDeletable
 {
 	private Location(Guid id, LocationName name, Address address, DateTime createdAt) : base(id)
 	{
@@ -23,6 +23,10 @@ public sealed class Location : Entity<Guid>
 	public DateTime CreatedAt { get; }
 
 	public DateTime? UpdatedAt { get; private set; }
+
+	public bool IsDeleted { get; private set; }
+
+	public DateTime? DeletedAt { get; private set; }
 
 	public static Result<Location, Error> Create(
 		Guid id,
@@ -61,6 +65,19 @@ public sealed class Location : Entity<Guid>
 		Address = address;
 		UpdatedAt = updatedAt;
 
+		return UnitResult.Success<Error>();
+	}
+
+	public UnitResult<Error> Delete(DateTime deletedAt)
+	{
+		if (deletedAt == default || deletedAt < CreatedAt)
+			return UnitResult.Failure(Error.Validation("location.deletedAt.invalid", "DeletedAt is invalid"));
+
+		if (IsDeleted)
+			return UnitResult.Failure(Error.Conflict("location.already.deleted", "Локация уже удалена"));
+
+		IsDeleted = true;
+		DeletedAt = deletedAt;
 		return UnitResult.Success<Error>();
 	}
 }

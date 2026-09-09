@@ -22,6 +22,32 @@ public class LocationTests
         Assert.Equal(_validAddress, result.Value.Address);
         Assert.Equal(_validDate, result.Value.CreatedAt);
         Assert.Null(result.Value.UpdatedAt);
+        Assert.False(result.Value.IsDeleted);
+        Assert.Null(result.Value.DeletedAt);
+    }
+
+    [Fact]
+    public void DeleteSetsDeletedState()
+    {
+        var location = Location.Create(Guid.NewGuid(), _validName, _validAddress, _validDate).Value;
+        var deletedAt = _validDate.AddHours(1);
+
+        var result = location.Delete(deletedAt);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(location.IsDeleted);
+        Assert.Equal(deletedAt, location.DeletedAt);
+    }
+
+    [Fact]
+    public void DeleteBeforeCreatedAtReturnsValidation()
+    {
+        var location = Location.Create(Guid.NewGuid(), _validName, _validAddress, _validDate).Value;
+
+        var result = location.Delete(_validDate.AddSeconds(-1));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Validation, result.Error.Type);
     }
 
     [Fact]

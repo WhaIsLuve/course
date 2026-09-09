@@ -3,7 +3,7 @@ using DirectoryService.SharedKernel.Errors;
 
 namespace DirectoryService.Domain.Departments;
 
-public sealed class Department : Entity<Guid>
+public sealed class Department : Entity<Guid>, ISoftDeletable
 {
     private Department(Guid id, DepartmentName name, DepartmentSlug slug, DepartmentPath path, Guid? parentId,
         DateTime createdAt) : base(id)
@@ -30,6 +30,10 @@ public sealed class Department : Entity<Guid>
     public DateTime CreatedAt { get; }
 
     public DateTime? UpdatedAt { get; private set; }
+
+    public bool IsDeleted { get; private set; }
+
+    public DateTime? DeletedAt { get; private set; }
 
     public static Result<Department, Error> Create(
         Guid id,
@@ -110,6 +114,19 @@ public sealed class Department : Entity<Guid>
         UpdatedAt = updatedAt;
         Name = name;
 
+        return UnitResult.Success<Error>();
+    }
+
+    public UnitResult<Error> Delete(DateTime deletedAt)
+    {
+        if (deletedAt == default || deletedAt < CreatedAt)
+            return UnitResult.Failure(Error.Validation("department.deletedAt.invalid", "DeletedAt is invalid"));
+
+        if (IsDeleted)
+            return UnitResult.Failure(Error.Conflict("department.already.deleted", "Подразделение уже удалено"));
+
+        IsDeleted = true;
+        DeletedAt = deletedAt;
         return UnitResult.Success<Error>();
     }
 }

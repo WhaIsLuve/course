@@ -39,5 +39,13 @@ internal sealed class LocationConfiguration : IEntityTypeConfiguration<Location>
 			.HasColumnName("created_at");
 		builder.Property(x => x.UpdatedAt)
 			.HasColumnName("updated_at");
+		builder.Property(x => x.IsDeleted)
+			.HasColumnName("is_deleted");
+		builder.Property(x => x.DeletedAt)
+			.HasColumnName("deleted_at");
+		builder.HasQueryFilter(x => !x.IsDeleted);
+		builder.HasIndex(x => new { x.IsDeleted, x.DeletedAt })
+			.HasDatabaseName("IX_locations_soft_delete")
+			.HasFilter("is_deleted = TRUE AND deleted_at IS NOT NULL");
 	}
 }

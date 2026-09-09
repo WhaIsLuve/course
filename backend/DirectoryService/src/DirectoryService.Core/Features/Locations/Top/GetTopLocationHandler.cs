@@ -21,8 +21,8 @@ public sealed class GetTopLocationHandler(IDbConnectionFactory dbConnectionFacto
             l.street AS "Street",
             l.building AS "Building",
             COUNT(DISTINCT dl.department_id)::int AS "DepartmentCount"
-        FROM locations AS l
-        LEFT JOIN department_locations AS dl ON dl.location_id = l.id
+        FROM active_locations AS l
+        LEFT JOIN active_department_locations AS dl ON dl.location_id = l.id
         GROUP BY l.id, l.name, l.country, l.city, l.street, l.building
         ORDER BY "DepartmentCount" DESC, l.name ASC, l.id ASC
         LIMIT 5;

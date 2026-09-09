@@ -15,15 +15,10 @@ internal sealed class PositionRepository(AppDbContext dbContext) : IPositionRepo
         _dbContext.Positions.Add(position);
     }
 
-    public void Remove(Position position)
-    {
-        _dbContext.Positions.Remove(position);
-    }
-
     public async ValueTask<Result<Position, Error>> GetByIdAsync(Guid id,
         CancellationToken cancellationToken = default)
     {
-        var position = await _dbContext.Positions.FindAsync([id], cancellationToken);
+        var position = await _dbContext.Positions.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         return position.ToResult(Error.NotFound("position.not.found", "Должность не найдена"));
     }
 
